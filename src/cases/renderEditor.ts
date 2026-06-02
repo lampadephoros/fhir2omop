@@ -5,8 +5,9 @@
 // Save & Run posts to POST /cases/:slug, which writes the file and runs it.
 const Y = (o: any) => (Bun as any).YAML.stringify(o, null, 2);
 
-export default async function (ctx: Context, opts: { file?: any; slug?: string; isNew?: boolean }): Promise<string> {
+export default async function (ctx: Context, opts: { file?: any; slug?: string; isNew?: boolean; embedded?: boolean }): Promise<string> {
     const isNew = !!opts.isNew;
+    const embedded = !!opts.embedded; // rendered inside the detail page's Read/Edit toggle
     const file = opts.file;
     const slug = opts.slug ?? file?.slug ?? "";
 
@@ -56,7 +57,15 @@ export default async function (ctx: Context, opts: { file?: any; slug?: string; 
       <input data-slug value="${esc(slug)}" placeholder="observation--measurement--value" class="mt-1 w-full font-mono text-[13px] border border-gray-200 rounded px-2 py-1 outline-none focus:border-sky-400"></label>`
         : `<p class="not-prose font-mono text-[11px] text-gray-400 mb-3">cases/${esc(slug)}.json</p>`;
 
-    return `<h1>${isNew ? "New test case" : `Edit: ${esc(title || slug)}`}</h1>
+    const header = isNew
+        ? `<h1>New test case</h1>`
+        : embedded
+            ? `<div class="not-prose flex items-center gap-3 mb-3"><span class="text-[15px] font-semibold text-gray-800">Editing</span><button type="button" onclick="casesMode('read')" class="text-[12px] text-gray-500 hover:underline">← back to read</button></div>`
+            : `<h1>Edit: ${esc(title || slug)}</h1>`;
+    const cancel = embedded
+        ? `<button type="button" onclick="casesMode('read')" class="text-[12px] text-gray-500 hover:underline">cancel</button>`
+        : `<a href="/cases${isNew ? "" : "/" + enc(slug)}" class="text-[12px] text-gray-500 hover:underline">cancel</a>`;
+    return `${header}
 <form id="case-editor" class="not-prose" data-slug="${isNew ? "" : esc(slug)}">
   ${slugField}
   <label class="block mb-3"><span class="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Title</span>
@@ -74,9 +83,9 @@ export default async function (ctx: Context, opts: { file?: any; slug?: string; 
     <div id="variants">${variants.map(variantBlock).join("")}</div>
   </div>
 
-  <div class="flex items-center gap-3 sticky bottom-0 bg-white/90 backdrop-blur py-2 border-t border-gray-200">
+  <div class="flex items-center gap-3 mt-4 pt-3 border-t border-gray-200">
     <button type="button" onclick="save()" class="px-3 py-1.5 rounded bg-sky-600 text-white text-[13px] font-medium hover:bg-sky-700">Save &amp; Run</button>
-    <a href="/cases${isNew ? "" : "/" + enc(slug)}" class="text-[12px] text-gray-500 hover:underline">cancel</a>
+    ${cancel}
     <span id="ed-status" class="text-[12px] text-gray-500"></span>
   </div>
   <div id="ed-results" class="mt-3"></div>
