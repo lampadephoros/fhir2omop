@@ -10,7 +10,10 @@ declare global {
         forEdge: typeof import("./cases/forEdge").default;
         load: typeof import("./cases/load").default;
         renderDetail: typeof import("./cases/renderDetail").default;
+        renderEditor: typeof import("./cases/renderEditor").default;
         renderList: typeof import("./cases/renderList").default;
+        runOne: typeof import("./cases/runOne").default;
+        save: typeof import("./cases/save").default;
         };
         conceptmap: {
         materialize: typeof import("./conceptmap/materialize").default;

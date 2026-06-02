@@ -58,8 +58,9 @@ export default function (ctx: Context, opts: { cases: any[] }): string {
     const runLine = ran.length === 0
         ? `Not run yet — <code>bun script/run-cases.ts</code> to execute against the real pipeline.`
         : `Last run: <strong class="${totPass === totRan ? "text-emerald-700" : "text-rose-700"}">${totPass}/${totRan} green</strong>${cases[0]?.ranAt ? ` · ${esc(String(cases[0].ranAt).slice(0, 19).replace("T", " "))}` : ""}.`;
-    return `<h1>Test cases</h1>
-<p class="text-gray-600 -mt-1">Golden FHIR&nbsp;→&nbsp;OMOP fixtures, organized by source resource then implementation branch. <strong>${cases.length}</strong> branches across <strong>${order.length}</strong> resources, <strong>${totalVariants}</strong> variants. ${runLine}</p>
+    return `<div class="not-prose flex items-center justify-between gap-3"><h1 class="!mb-0">Test cases</h1>
+  <a href="/cases/new" class="shrink-0 px-3 py-1.5 rounded bg-sky-600 text-white text-[13px] font-medium hover:bg-sky-700">+ New case</a></div>
+<p class="text-gray-600">Golden FHIR&nbsp;→&nbsp;OMOP fixtures, organized by source resource then implementation branch. <strong>${cases.length}</strong> branches across <strong>${order.length}</strong> resources, <strong>${totalVariants}</strong> variants. ${runLine}</p>
 <div class="mt-4">${sections}</div>`;
 }
 

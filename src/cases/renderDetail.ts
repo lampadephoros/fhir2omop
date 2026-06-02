@@ -133,8 +133,9 @@ export default async function (ctx: Context, opts: { case: any }): Promise<strin
   </div>`
         : `<p class="not-prose text-[11px] text-gray-400 mb-3">FK ids shown as <span class="font-mono">ref:&lt;logical-id&gt;</span>. Per row, columns not listed are asserted <span class="font-mono">NULL</span>; tables not listed are asserted empty.</p>`;
 
-    return `<h1>${esc(file.title)}</h1>
-<div class="-mt-1 mb-1">${flow}</div>
+    return `<div class="not-prose flex items-center justify-between gap-3"><h1 class="!mb-0">${esc(file.title)}</h1>
+  <a href="/cases/${enc(file.slug)}/edit" class="shrink-0 px-3 py-1.5 rounded border border-sky-300 text-sky-700 text-[13px] font-medium hover:bg-sky-50">Edit</a></div>
+<div class="mt-1 mb-1">${flow}</div>
 <p class="font-mono text-[11px] text-gray-400 -mt-1">cases/${esc(file.file)} · ${file.variantCount} variant${file.variantCount === 1 ? "" : "s"}</p>
 ${notesPanel}
 ${fixturesHtml}
@@ -187,3 +188,4 @@ function renderFlow(fhirTypes: string[], omopTables: string[]): string {
 function esc(s: string) {
     return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
 }
+function enc(s: string) { return encodeURIComponent(s); }
