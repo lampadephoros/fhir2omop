@@ -10,7 +10,7 @@ type Payload = {
     title?: string;
     notes?: string;
     fixtures?: string[]; // YAML strings, one FHIR resource each
-    cases?: { desc?: string; fhir?: string[]; omop?: string }[]; // omop = YAML of { table: [rows] }
+    cases?: { desc?: string; fhir?: string[]; omop?: any }[]; // omop = { table: [rows] } object (structured form) or YAML string (legacy)
 };
 
 function parseYaml(label: string, text: string): any {
@@ -35,8 +35,11 @@ export default async function (ctx: Context, opts: { slug: string; payload: Payl
         const fixtures = (p.fixtures ?? []).map((y, i) => parseYaml(`fixture #${i + 1}`, y)).filter((x) => x !== undefined);
         const cases = (p.cases ?? []).map((c, i) => {
             const fhir = (c.fhir ?? []).map((y, j) => parseYaml(`variant #${i + 1} fhir #${j + 1}`, y)).filter((x) => x !== undefined);
-            const omopParsed = parseYaml(`variant #${i + 1} omop`, c.omop ?? "");
-            const omop = omopParsed ?? {};
+            // omop arrives as a structured object from the form; tolerate a YAML
+            // string (legacy / API callers).
+            let omop: any;
+            if (c.omop && typeof c.omop === "object" && !Array.isArray(c.omop)) omop = c.omop;
+            else omop = parseYaml(`variant #${i + 1} omop`, typeof c.omop === "string" ? c.omop : "") ?? {};
             if (typeof omop !== "object" || Array.isArray(omop)) {
                 throw new Error(`variant #${i + 1} omop must be an object { table: [rows] } (or empty for a negative case)`);
             }

@@ -18,6 +18,14 @@ export default async function (ctx: Context, opts: { file?: any; slug?: string; 
         ? [{ desc: "", fhir: [{ resourceType: "Patient", id: "pt-1" }], omop: {} }]
         : (file?.cases ?? []);
 
+    // OMOP target tables fed by our edges + per-table column datalists (we know the
+    // columns) so the expected-OMOP form autocompletes real column names.
+    const OMOP_TABLES = ["care_site", "condition_occurrence", "death", "device_exposure", "drug_exposure", "location", "measurement", "note", "observation", "observation_period", "payer_plan_period", "person", "procedure_occurrence", "provider", "specimen", "visit_occurrence"];
+    const omopColDatalists = (await Promise.all(OMOP_TABLES.map(async (t) => {
+        const cols = (await ctx.fns.omop.byTable(ctx, { name: t })).filter((f: any) => !f.isPrimaryKey).map((f: any) => f.name);
+        return `<datalist id="oc--${t}">${cols.map((c: string) => `<option value="${esc(c)}"></option>`).join("")}</datalist>`;
+    }))).join("");
+
     const fixtureBlock = (yaml: string) => `<div class="fx not-prose mb-2 border border-gray-200 rounded">
   <div class="flex items-center justify-between px-2 py-1 bg-gray-50 border-b border-gray-100"><span class="text-[10px] uppercase tracking-wider text-gray-400">fixture</span><button type="button" onclick="rm(this,'.fx')" class="text-[11px] text-rose-500 hover:underline">remove</button></div>
   <textarea data-fixture spellcheck="false" class="w-full font-mono text-[12px] p-2 outline-none resize-y" rows="${Math.max(3, yaml.split("\n").length)}">${esc(yaml)}</textarea>
@@ -28,9 +36,15 @@ export default async function (ctx: Context, opts: { file?: any; slug?: string; 
   <textarea data-fhir spellcheck="false" class="w-full font-mono text-[12px] p-2 outline-none resize-y" rows="${Math.max(4, yaml.split("\n").length)}">${esc(yaml)}</textarea>
 </div>`;
 
-    const variantBlock = (v: any, i: number) => {
+    const addTableSelect = `<select hx-get="/cases/frag/omop" hx-trigger="change" hx-vals='js:{kind:"table",table:event.target.value}' hx-target="previous .omop-tables" hx-swap="beforeend" hx-on:htmx:after-request="this.selectedIndex=0" class="mt-1 text-[12px] border border-gray-200 rounded px-2 py-1 bg-white">
+      <option value="">+ add OMOP table…</option>
+      ${OMOP_TABLES.map((t) => `<option value="${t}">${t}</option>`).join("")}
+    </select>`;
+    const variantBlock = async (v: any, i: number) => {
         const fhirs = (v.fhir ?? []).map((r: any) => fhirBlock(Y(r))).join("");
-        const omopYaml = v.omop && Object.keys(v.omop).length ? Y(v.omop) : "";
+        const omopTablesHtml = (await Promise.all(
+            Object.entries(v.omop ?? {}).map(([t, rows]) => ctx.fns.cases.omopFrag(ctx, { kind: "table", table: t, rows: rows as any[] })),
+        )).join("");
         return `<div class="variant not-prose mb-4 border border-gray-300 rounded-lg overflow-hidden">
   <div class="flex items-center justify-between px-3 py-1.5 bg-gray-100 border-b border-gray-200">
     <span class="text-[11px] font-semibold text-gray-600">Variant</span>
@@ -43,9 +57,11 @@ export default async function (ctx: Context, opts: { file?: any; slug?: string; 
       <div class="flex items-center justify-between mb-1"><span class="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">FHIR input</span><button type="button" onclick="addFhir(this)" class="text-[11px] text-sky-600 hover:underline">+ resource</button></div>
       <div class="fhir-list">${fhirs}</div>
     </div>
-    <label class="block"><span class="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Expected OMOP (YAML)</span>
-      <span class="text-[11px] text-gray-400 normal-case"> — <code>{ table: [ { col: value } ] }</code>; leave empty for a negative case (no rows)</span>
-      <textarea data-omop spellcheck="false" placeholder="measurement:\n  - person_id: ref:pt-1\n    value_as_number: 5" class="mt-1 w-full font-mono text-[12px] border border-gray-200 rounded p-2 outline-none focus:border-violet-400 resize-y" rows="${Math.max(4, omopYaml.split("\n").length + 1)}">${esc(omopYaml)}</textarea>
+    <div>
+      <div class="mb-1"><span class="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Expected OMOP</span>
+        <span class="text-[11px] text-gray-400 normal-case"> — column ↔ value rows per table; no tables ⇒ negative case (no rows). Column field autocompletes the table's OMOP columns.</span></div>
+      <div class="omop-tables space-y-2">${omopTablesHtml}</div>
+      ${addTableSelect}
     </div>
   </div>
 </div>`;
@@ -65,8 +81,11 @@ export default async function (ctx: Context, opts: { file?: any; slug?: string; 
     const cancel = embedded
         ? `<button type="button" onclick="casesMode('read')" class="text-[12px] text-gray-500 hover:underline">cancel</button>`
         : `<a href="/cases${isNew ? "" : "/" + enc(slug)}" class="text-[12px] text-gray-500 hover:underline">cancel</a>`;
+    const variantsHtml = (await Promise.all(variants.map(variantBlock))).join("");
+    const blankVariant = await variantBlock({ desc: "", fhir: [{ resourceType: "Observation", id: "obs-1" }], omop: {} }, 0);
     return `${header}
-<form id="case-editor" class="not-prose" data-slug="${isNew ? "" : esc(slug)}">
+${omopColDatalists}
+<form id="case-editor" class="not-prose" hx-disinherit="*" data-slug="${isNew ? "" : esc(slug)}">
   ${slugField}
   <label class="block mb-3"><span class="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Title</span>
     <input data-f="title" value="${esc(title)}" placeholder="Observation → measurement" class="mt-1 w-full text-[14px] border border-gray-200 rounded px-2 py-1 outline-none focus:border-sky-400"></label>
@@ -80,7 +99,7 @@ export default async function (ctx: Context, opts: { file?: any; slug?: string; 
 
   <div class="mb-4">
     <div class="flex items-center justify-between mb-1.5"><span class="text-[12px] font-semibold text-gray-700 uppercase tracking-wider">Variants</span><button type="button" onclick="addVariant()" class="text-[11px] text-sky-600 hover:underline">+ variant</button></div>
-    <div id="variants">${variants.map(variantBlock).join("")}</div>
+    <div id="variants">${variantsHtml}</div>
   </div>
 
   <div class="flex items-center gap-3 mt-4 pt-3 border-t border-gray-200">
@@ -93,7 +112,7 @@ export default async function (ctx: Context, opts: { file?: any; slug?: string; 
 
 <template id="tpl-fixture">${fixtureBlock("resourceType: Patient\nid: pt-1\ngender: female")}</template>
 <template id="tpl-fhir">${fhirBlock("resourceType: Observation\nid: obs-1")}</template>
-<template id="tpl-variant">${variantBlock({ desc: "", fhir: [{ resourceType: "Observation", id: "obs-1" }], omop: {} }, 0)}</template>
+<template id="tpl-variant">${blankVariant}</template>
 
 <script>
 (function(){
@@ -103,6 +122,23 @@ export default async function (ctx: Context, opts: { file?: any; slug?: string; 
   window.addVariant = () => document.getElementById('variants').appendChild(document.getElementById('tpl-variant').content.cloneNode(true));
   window.addFhir = (btn) => btn.closest('.variant').querySelector('.fhir-list').appendChild(document.getElementById('tpl-fhir').content.cloneNode(true));
 
+  function serOmop(v){
+    const o = {};
+    v.querySelectorAll('.omop-table').forEach(tb => {
+      const t = (tb.dataset.table||'').trim(); if (!t) return;
+      tb.querySelectorAll('.orow').forEach(r => {
+        const row = {};
+        r.querySelectorAll('.ocell').forEach(c => {
+          const k = (c.querySelector('[data-col]').value||'').trim(); if (!k) return;
+          const raw = c.querySelector('[data-val]').value;
+          const s = String(raw).trim();
+          row[k] = (s !== '' && /^-?\\d+(\\.\\d+)?$/.test(s)) ? Number(s) : raw;
+        });
+        if (Object.keys(row).length) (o[t] = o[t] || []).push(row);
+      });
+    });
+    return o;
+  }
   function serialize(){
     const slug = (root.dataset.slug || (root.querySelector('[data-slug]')||{}).value || '').trim();
     return {
@@ -113,7 +149,7 @@ export default async function (ctx: Context, opts: { file?: any; slug?: string; 
       cases: [...document.querySelectorAll('#variants > .variant')].map(v=>({
         desc: (v.querySelector('[data-desc]').value||'').trim(),
         fhir: [...v.querySelectorAll('[data-fhir]')].map(t=>t.value).filter(s=>s.trim()),
-        omop: (v.querySelector('[data-omop]').value||''),
+        omop: serOmop(v),
       })),
     };
   }

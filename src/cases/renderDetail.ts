@@ -133,21 +133,16 @@ export default async function (ctx: Context, opts: { case: any }): Promise<strin
   </div>`
         : `<p class="not-prose text-[11px] text-gray-400 mb-3">FK ids shown as <span class="font-mono">ref:&lt;logical-id&gt;</span>. Per row, columns not listed are asserted <span class="font-mono">NULL</span>; tables not listed are asserted empty.</p>`;
 
-    // Read mode is the default view; Edit toggles the embedded editor in place
-    // (same page, no navigation).
-    const editor = await ctx.fns.cases.renderEditor(ctx, { file, slug: file.slug, embedded: true });
-    return `<div id="cases-read">
-<div class="not-prose flex items-center justify-between gap-3"><h1 class="!mb-0">${esc(file.title)}</h1>
-  <button type="button" onclick="casesMode('edit')" class="shrink-0 px-3 py-1.5 rounded border border-sky-300 text-sky-700 text-[13px] font-medium hover:bg-sky-50">Edit</button></div>
+    // Read mode is the default; Edit navigates to /cases/:slug/edit (classic
+    // web-2.0 page, swapped in via hx-boost).
+    return `<div class="not-prose flex items-center justify-between gap-3"><h1 class="!mb-0">${esc(file.title)}</h1>
+  <a href="/cases/${enc(file.slug)}/edit" class="shrink-0 px-3 py-1.5 rounded border border-sky-300 text-sky-700 text-[13px] font-medium hover:bg-sky-50">Edit</a></div>
 <div class="mt-1 mb-1">${flow}</div>
 <p class="font-mono text-[11px] text-gray-400 -mt-1">cases/${esc(file.file)} · ${file.variantCount} variant${file.variantCount === 1 ? "" : "s"}</p>
 ${notesPanel}
 ${fixturesHtml}
 ${controls}
-${variantsHtml}
-</div>
-<div id="cases-edit" class="hidden">${editor}</div>
-<script>window.casesMode=function(m){var r=document.getElementById('cases-read'),e=document.getElementById('cases-edit');if(!r||!e)return;r.classList.toggle('hidden',m!=='read');e.classList.toggle('hidden',m!=='edit');if(m==='edit')window.scrollTo(0,0);};</script>`;
+${variantsHtml}`;
 }
 
 // One expected OMOP row as a key/value card.

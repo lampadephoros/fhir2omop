@@ -9,6 +9,7 @@ declare global {
         cases: {
         forEdge: typeof import("./cases/forEdge").default;
         load: typeof import("./cases/load").default;
+        omopFrag: typeof import("./cases/omopFrag").default;
         renderDetail: typeof import("./cases/renderDetail").default;
         renderEditor: typeof import("./cases/renderEditor").default;
         renderList: typeof import("./cases/renderList").default;
