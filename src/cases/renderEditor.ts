@@ -18,13 +18,9 @@ export default async function (ctx: Context, opts: { file?: any; slug?: string; 
         ? [{ desc: "", fhir: [{ resourceType: "Patient", id: "pt-1" }], omop: {} }]
         : (file?.cases ?? []);
 
-    // OMOP target tables fed by our edges + per-table column datalists (we know the
-    // columns) so the expected-OMOP form autocompletes real column names.
+    // OMOP target tables fed by our edges. Picking one htmx-loads a form with all
+    // of that table's columns (labels, required marked) — see omopFrag.
     const OMOP_TABLES = ["care_site", "condition_occurrence", "death", "device_exposure", "drug_exposure", "location", "measurement", "note", "observation", "observation_period", "payer_plan_period", "person", "procedure_occurrence", "provider", "specimen", "visit_occurrence"];
-    const omopColDatalists = (await Promise.all(OMOP_TABLES.map(async (t) => {
-        const cols = (await ctx.fns.omop.byTable(ctx, { name: t })).filter((f: any) => !f.isPrimaryKey).map((f: any) => f.name);
-        return `<datalist id="oc--${t}">${cols.map((c: string) => `<option value="${esc(c)}"></option>`).join("")}</datalist>`;
-    }))).join("");
 
     const fixtureBlock = (yaml: string) => `<div class="fx not-prose mb-2 border border-gray-200 rounded">
   <div class="flex items-center justify-between px-2 py-1 bg-gray-50 border-b border-gray-100"><span class="text-[10px] uppercase tracking-wider text-gray-400">fixture</span><button type="button" onclick="rm(this,'.fx')" class="text-[11px] text-rose-500 hover:underline">remove</button></div>
@@ -84,7 +80,6 @@ export default async function (ctx: Context, opts: { file?: any; slug?: string; 
     const variantsHtml = (await Promise.all(variants.map(variantBlock))).join("");
     const blankVariant = await variantBlock({ desc: "", fhir: [{ resourceType: "Observation", id: "obs-1" }], omop: {} }, 0);
     return `${header}
-${omopColDatalists}
 <form id="case-editor" class="not-prose" hx-disinherit="*" data-slug="${isNew ? "" : esc(slug)}">
   ${slugField}
   <label class="block mb-3"><span class="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Title</span>
@@ -128,11 +123,13 @@ ${omopColDatalists}
       const t = (tb.dataset.table||'').trim(); if (!t) return;
       tb.querySelectorAll('.orow').forEach(r => {
         const row = {};
-        r.querySelectorAll('.ocell').forEach(c => {
-          const k = (c.querySelector('[data-col]').value||'').trim(); if (!k) return;
-          const raw = c.querySelector('[data-val]').value;
-          const s = String(raw).trim();
-          row[k] = (s !== '' && /^-?\\d+(\\.\\d+)?$/.test(s)) ? Number(s) : raw;
+        r.querySelectorAll('[data-col]').forEach(inp => {
+          const k = inp.getAttribute('data-col'); const raw = inp.value; const s = String(raw).trim();
+          if (s === '') return;
+          row[k] = /^-?\\d+(\\.\\d+)?$/.test(s) ? Number(s) : raw;
+        });
+        r.querySelectorAll('[data-name-for]').forEach(inp => {
+          if (String(inp.value).trim() !== '') row[inp.getAttribute('data-name-for')+'__name'] = inp.value;
         });
         if (Object.keys(row).length) (o[t] = o[t] || []).push(row);
       });
