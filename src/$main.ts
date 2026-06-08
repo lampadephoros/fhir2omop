@@ -1,4 +1,4 @@
-export default async function () {
+async function main() {
     const ctx = {
         env: { ...process.env },
         state: {},
@@ -15,8 +15,12 @@ export default async function () {
     return ctx;
 }
 
+export default main;
+
+// Call the local main() directly — do NOT re-import this module. Under Bun 1.3.14
+// the re-entrant `await import("./$main.ts")` from the entry module spins at ~100%
+// CPU (the self-import recurses instead of returning the already-cached module).
 if (import.meta.main) {
-    const main = (await import("./$main.ts")).default;
     const ctx = await main();
     (globalThis as any).ctx = ctx;
     console.log("\nctx keys:", Object.keys(ctx));
