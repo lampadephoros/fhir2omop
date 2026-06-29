@@ -151,13 +151,11 @@ graph LR
     F_eth --> O_esv
 ```
 
-**Process Flow & Scripts:**
-1. **Stage-1 Flattening:** The JSON-on-FHIR view definition [`Patient__person.view.json`](/mapspec/views/Patient__person.view.json) extracts demographic fields from the raw FHIR `Patient` resource, unrolling US Core race and ethnicity extensions.
-2. **Stage-2 ETL Mapping:** The SQL pipeline [`Patient__person.sql`](/mapspec/etl/Patient__person.sql) maps the extracted attributes:
-   * Maps genders via the `cm.gender_to_omop` crosswalk.
-   * Maps race concepts via `cm.race_omb_to_omop` (standard OMB) and `cm.race_text_synthea_to_omop` (narrative text fallbacks).
-   * Maps ethnicity concepts via `cm.ethnicity_omb_to_omop`.
-   * Inserts the resolved standard demographic attributes into `cdm_ours_fhir.person`.
+**Business Logic & Process Flow:**
+* **Logic:** When a patient is registered, we must capture their demographic profile (birth date, gender, race, and ethnicity) to establish a base `person` record. Standardizing these demographics is crucial for building clinical cohorts and tracking patient characteristics.
+* **Process Flow & Scripts:**
+  1. **Stage-1 (Extraction):** The JSON view [`Patient__person.view.json`](/mapspec/views/Patient__person.view.json) extracts raw fields like birthDate and gender, and unrolls US Core race/ethnicity extensions from the FHIR `Patient` resource.
+  2. **Stage-2 (Normalization & Loading):** The SQL script [`Patient__person.sql`](/mapspec/etl/Patient__person.sql) maps these raw fields into standard OMOP codes (e.g. converting `"female"` to code `8532` using `cm.gender_to_omop`, and checking standard OMB lists for race/ethnicity). It then writes the unified patient record to the target `person` table.
 
 ---
 
@@ -196,11 +194,12 @@ graph LR
     C_related --> O_rc
 ```
 
-**Process Flow & Scripts:**
-1. **Stage-1 Flattening:** The view definition [`Condition__condition_occurrence.view.json`](/mapspec/views/Condition__condition_occurrence.view.json) extracts codings, dates, and related condition references (`condition-related` extension) from the FHIR `Condition` resource.
-2. **Stage-2 ETL Mapping:**
-   * **Occurrence Mapping:** The SQL pipeline [`Condition__condition_occurrence.sql`](/mapspec/etl/Condition__condition_occurrence.sql) resolves diagnostic codes (SNOMED-CT, ICD-10-CM) to standard target concept IDs via `cm.fhir_system_to_omop_vocab` and writes rows to `cdm_ours_fhir.condition_occurrence`.
-   * **Relationship Linkage:** The SQL pipeline [`Condition__fact_relationship.sql`](/mapspec/etl/Condition__fact_relationship.sql) performs a self-join on the staging table using the extracted `primary_condition_ref` and inserts primary-metastatic pairs (relationship concept IDs `44818854` and `44818765`) into `cdm_ours_fhir.fact_relationship`.
+**Business Logic & Process Flow:**
+* **Logic:** Diagnoses represent active diseases. In cancer care, distinguishing a primary tumor from metastatic spread and preserving the parent-child linkage between them is critical to trace disease progression and evaluate survival outcomes.
+* **Process Flow & Scripts:**
+  1. **Stage-1 (Extraction):** The JSON view [`Condition__condition_occurrence.view.json`](/mapspec/views/Condition__condition_occurrence.view.json) parses the FHIR `Condition` resource to extract diagnosis codings, onset dates, and references to related conditions (representing metastases linked to primary sites).
+  2. **Stage-2 (Diagnosis Mapping):** The SQL script [`Condition__condition_occurrence.sql`](/mapspec/etl/Condition__condition_occurrence.sql) standardizes SNOMED-CT or ICD codes to standard concept IDs via `cm.fhir_system_to_omop_vocab` and records the diagnosis events in `condition_occurrence`.
+  3. **Stage-2 (Metastasis Linking):** The SQL script [`Condition__fact_relationship.sql`](/mapspec/etl/Condition__fact_relationship.sql) matches metastatic records to their primary parent diagnoses via a self-join and writes bidirectional links (`Primary of` and `Metastasis of`) to the `fact_relationship` table.
 
 ---
 
@@ -235,9 +234,11 @@ graph LR
     S_date --> O_date
 ```
 
-**Process Flow & Scripts:**
-1. **Stage-1 Flattening:** The view definition [`Specimen__specimen.view.json`](/mapspec/views/Specimen__specimen.view.json) extracts specimen collection details (type, anatomic site, quantity, collection timestamp) and unrolls sample processing procedures.
-2. **Stage-2 ETL Mapping:** The SQL pipeline [`Specimen__specimen.sql`](/mapspec/etl/Specimen__specimen.sql) resolves the specimen type, modified by the preservation processing method (e.g., mapping to FFPE tissue vs. Frozen tissue standard concepts), maps the anatomical site, and inserts standard records into `cdm_ours_fhir.specimen`.
+**Business Logic & Process Flow:**
+* **Logic:** Biopsy specimens (like solid tissue samples or liquid blood draws) are collected for pathology and molecular diagnostics. Recording preservation processing (like Formalin-Fixation Paraffin-Embedding vs. Freezing) and anatomical sites is essential to check sample viability and locate origin tissue.
+* **Process Flow & Scripts:**
+  1. **Stage-1 (Extraction):** The JSON view [`Specimen__specimen.view.json`](/mapspec/views/Specimen__specimen.view.json) extracts the specimen type, collection date, quantity, collection site, and processing procedures from the FHIR `Specimen` resource.
+  2. **Stage-2 (Preservation & Site Mapping):** The SQL script [`Specimen__specimen.sql`](/mapspec/etl/Specimen__specimen.sql) checks the processing methods. If FFPE or Freezing is detected, it upgrades the generic specimen concept to a precise preservation-specific concept (e.g. `"Formalin-fixed paraffin-embedded tissue specimen"`). It also standardizes the anatomical site and loads the results into `specimen`.
 
 ---
 
@@ -292,13 +293,15 @@ graph LR
     Ob_member --> O_fr_rel
 ```
 
-**Process Flow & Scripts:**
-1. **Stage-1 Flattening:** The view definition [`Observation__measurement.view.json`](/mapspec/views/Observation__measurement.view.json) acts as a unified flattener, extracting observation values, component keys, and `hasMember` panel arrays.
-2. **Stage-2 ETL Mapping:**
-   * **Staging Resolver:** The SQL helper [`_resolve_observation.sql`](/mapspec/etl/_resolve_observation.sql) acts as a joint resolver, joining codings to standard OMOP vocabularies via `cm.fhir_system_to_omop_vocab` and cleaning up component values.
-   * **Observation Routing:** The SQL pipeline [`Observation__observation.sql`](/mapspec/etl/Observation__observation.sql) filters resolved observations matching the Observation domain (somatic variants, Stage Group, and T, N, M categories) and inserts them into `cdm_ours_fhir.observation`.
-   * **Measurement Routing:** The SQL pipeline [`Observation__measurement.sql`](/mapspec/etl/Observation__measurement.sql) filters resolved observations belonging to the Measurement domain (TMB and MSI) and inserts them into `cdm_ours_fhir.measurement`.
-   * **Staging Panel Linkage:** The SQL pipeline [`Observation__fact_relationship.sql`](/mapspec/etl/Observation__fact_relationship.sql) unrolls the staging table's `has_members` array, linking TNM Stage Group records to T, N, M category rows in `cdm_ours_fhir.fact_relationship` via relationship concepts `44818790` and `44818873`.
+**Business Logic & Process Flow:**
+* **Logic:** Lab and genomic panel results carry distinct types of clinical assertions. Somatic variant detections (EGFR) and cancer stages represent diagnostic assertions (Observations), whereas quantitative biomarkers (like MSI-High status and TMB values) represent laboratory tests (Measurements). Staging group panels also contain sub-members (T, N, M categories) that must be linked to their parent group to preserve clinical context.
+* **Process Flow & Scripts:**
+  1. **Stage-1 (Extraction):** The JSON view [`Observation__measurement.view.json`](/mapspec/views/Observation__measurement.view.json) extracts codings, component keys (like Gene and DNA change), and lists of panel members (`hasMember`) from the FHIR `Observation` resource.
+  2. **Stage-2 (Resolution):** The SQL helper [`_resolve_observation.sql`](/mapspec/etl/_resolve_observation.sql) joins coding systems to standard OMOP vocabularies using `cm.fhir_system_to_omop_vocab` and cleans component structures.
+  3. **Stage-2 (Domain Routing):**
+     * The SQL script [`Observation__observation.sql`](/mapspec/etl/Observation__observation.sql) filters observations belonging to the Observation domain (such as EGFR variant and TNM staging group/components) and writes them to `observation`.
+     * The SQL script [`Observation__measurement.sql`](/mapspec/etl/Observation__measurement.sql) filters observations belonging to the Measurement domain (such as TMB levels and MSI status) and writes them to `measurement`.
+  4. **Stage-2 (Panel Linkage):** The SQL script [`Observation__fact_relationship.sql`](/mapspec/etl/Observation__fact_relationship.sql) links TNM Stage Group rows to their respective T, N, and M components in `fact_relationship` using bidirectional relationship concepts (`Has panel member` and `Panel member of`).
 
 ---
 
@@ -330,9 +333,11 @@ graph LR
     D_code --> O_note_class
 ```
 
-**Process Flow & Scripts:**
-1. **Stage-1 Flattening:** The view definition [`DiagnosticReport__note.view.json`](/mapspec/views/DiagnosticReport__note.view.json) extracts report conclusion summaries, codes, and dates from the raw FHIR `DiagnosticReport` resource.
-2. **Stage-2 ETL Mapping:** The SQL pipeline [`DiagnosticReport__note.sql`](/mapspec/etl/DiagnosticReport__note.sql) structures the report text, resolves the report classification concepts (e.g. Laboratory report class concept), and inserts records into `cdm_ours_fhir.note`.
+**Business Logic & Process Flow:**
+* **Logic:** When a lab finishes sequencing, they release a narrative report summarizing their findings. Staging the full textual content of this document is crucial for auditing, clinical NLP search pipelines, and manual chart review.
+* **Process Flow & Scripts:**
+  1. **Stage-1 (Extraction):** The JSON view [`DiagnosticReport__note.view.json`](/mapspec/views/DiagnosticReport__note.view.json) extracts the report's conclusion summary, LOINC code, and release timestamp from the FHIR `DiagnosticReport` resource.
+  2. **Stage-2 (Narrative Loading):** The SQL script [`DiagnosticReport__note.sql`](/mapspec/etl/DiagnosticReport__note.sql) formats the report text, resolves the note classification concepts, and inserts the full text record into `note`.
 
 
 
