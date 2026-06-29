@@ -30,6 +30,7 @@ SELECT DISTINCT ON (v.id, std.concept_id)
     v.value_unit_text, v.value_text,
     v.qualifier_code,
     v.range_low, v.range_high,
+    v.gene_symbol, v.hgvs_string, v.has_members,
     v.code_text,
     v.code_value           AS src_code,
     src.concept_id         AS src_concept_id,
@@ -69,7 +70,9 @@ LEFT JOIN (VALUES ('<', 4171756), ('<=', 4171754), ('>=', 4171755), ('>', 417270
 WHERE (v.value_number IS NOT NULL
     OR v.value_string IS NOT NULL
     OR v.value_code   IS NOT NULL
-    OR v.value_text   IS NOT NULL)
+    OR v.value_text   IS NOT NULL
+    OR v.gene_symbol  IS NOT NULL
+    OR v.hgvs_string  IS NOT NULL)
   AND COALESCE(v.status, 'final') NOT IN ('entered-in-error', 'cancelled', 'unknown')
 ORDER BY v.id, std.concept_id,
          CASE v.code_system

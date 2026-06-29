@@ -1,0 +1,468 @@
+{
+  "title": "Observation & Measurement · Genomics & Cancer Staging",
+  "notes": "Tests mapping of structured genomic variants, quantitative biomarkers (TMB, MSI), and TNM cancer staging (mCODE) observations to the observation, measurement, and fact_relationship tables.",
+  "fixtures": [
+    {
+      "resourceType": "Patient",
+      "id": "oncology-patient-1",
+      "gender": "female",
+      "birthDate": "1975-08-20"
+    }
+  ],
+  "cases": [
+    {
+      "desc": "Structured genomic variant EGFR p.L858R (LOINC 48018-6) -> observation table under LOINC 48018-6 with HGVS string as value",
+      "fhir": [
+        {
+          "resourceType": "Observation",
+          "id": "onc-obs-variant-1",
+          "status": "final",
+          "category": [
+            {
+              "coding": [
+                {
+                  "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                  "code": "laboratory",
+                  "display": "Laboratory"
+                }
+              ]
+            }
+          ],
+          "code": {
+            "coding": [
+              {
+                "system": "http://loinc.org",
+                "code": "48018-6",
+                "display": "Gene variant analysis of DNA by mutational analysis"
+              }
+            ]
+          },
+          "subject": {
+            "reference": "Patient/oncology-patient-1"
+          },
+          "effectiveDateTime": "2020-11-04T08:30:00-05:00",
+          "component": [
+            {
+              "code": {
+                "coding": [
+                  {
+                    "system": "http://loinc.org",
+                    "code": "48005-3",
+                    "display": "Gene studied ID"
+                  }
+                ]
+              },
+              "valueCodeableConcept": {
+                "coding": [
+                  {
+                    "system": "http://www.genenames.org",
+                    "code": "3236",
+                    "display": "EGFR"
+                  }
+                ]
+              }
+            },
+            {
+              "code": {
+                "coding": [
+                  {
+                    "system": "http://loinc.org",
+                    "code": "48004-6",
+                    "display": "DNA change (HGVS)"
+                  }
+                ]
+              },
+              "valueCodeableConcept": {
+                "coding": [
+                  {
+                    "system": "http://varnomen.hgvs.org",
+                    "code": "p.L858R"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "omop": {
+        "observation": [
+          {
+            "person_id": "ref:oncology-patient-1",
+            "observation_concept_id": 3011961,
+            "observation_concept_id__name": "Gene variant analysis of DNA by mutational analysis",
+            "observation_date": "2020-11-04",
+            "observation_datetime": "2020-11-04T08:30:00",
+            "observation_type_concept_id": 32817,
+            "observation_type_concept_id__name": "EHR",
+            "value_as_string": "p.L858R",
+            "observation_source_value": "EGFR p.L858R",
+            "observation_source_concept_id": 3011961,
+            "observation_source_concept_id__name": "Gene variant analysis of DNA by mutational analysis",
+            "value_source_value": "p.L858R"
+          }
+        ]
+      }
+    },
+    {
+      "desc": "Quantitative genomic biomarkers (TMB & MSI) -> measurement table with appropriate values and concepts",
+      "fhir": [
+        {
+          "resourceType": "Observation",
+          "id": "onc-obs-tmb-1",
+          "status": "final",
+          "category": [
+            {
+              "coding": [
+                {
+                  "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                  "code": "laboratory",
+                  "display": "Laboratory"
+                }
+              ]
+            }
+          ],
+          "code": {
+            "coding": [
+              {
+                "system": "http://loinc.org",
+                "code": "94076-7",
+                "display": "Tumor mutational burden"
+              }
+            ]
+          },
+          "subject": {
+            "reference": "Patient/oncology-patient-1"
+          },
+          "effectiveDateTime": "2020-11-04T08:30:00-05:00",
+          "valueQuantity": {
+            "value": 12.5,
+            "unit": "mut/Mb",
+            "system": "http://unitsofmeasure.org",
+            "code": "mut/Mb"
+          }
+        },
+        {
+          "resourceType": "Observation",
+          "id": "onc-obs-msi-1",
+          "status": "final",
+          "category": [
+            {
+              "coding": [
+                {
+                  "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                  "code": "laboratory",
+                  "display": "Laboratory"
+                }
+              ]
+            }
+          ],
+          "code": {
+            "coding": [
+              {
+                "system": "http://loinc.org",
+                "code": "81695-9",
+                "display": "Microsatellite instability [Presence] in Tumor by MS PCR"
+              }
+            ]
+          },
+          "subject": {
+            "reference": "Patient/oncology-patient-1"
+          },
+          "effectiveDateTime": "2020-11-04T08:30:00-05:00",
+          "valueCodeableConcept": {
+            "text": "High",
+            "coding": [
+              {
+                "system": "http://loinc.org",
+                "code": "LA26284-4",
+                "display": "High"
+              }
+            ]
+          }
+        }
+      ],
+      "omop": {
+        "measurement": [
+          {
+            "person_id": "ref:oncology-patient-1",
+            "measurement_concept_id": 3027815,
+            "measurement_concept_id__name": "Tumor mutational burden",
+            "measurement_date": "2020-11-04",
+            "measurement_datetime": "2020-11-04T08:30:00",
+            "measurement_type_concept_id": 32817,
+            "measurement_type_concept_id__name": "EHR",
+            "value_as_number": 12.5,
+            "measurement_source_value": "94076-7",
+            "measurement_source_concept_id": 3027815,
+            "measurement_source_concept_id__name": "Tumor mutational burden",
+            "unit_source_value": "mut/Mb"
+          },
+          {
+            "person_id": "ref:oncology-patient-1",
+            "measurement_concept_id": 3016431,
+            "measurement_concept_id__name": "Microsatellite instability [Presence] in Tumor by MS PCR",
+            "measurement_date": "2020-11-04",
+            "measurement_datetime": "2020-11-04T08:30:00",
+            "measurement_type_concept_id": 32817,
+            "measurement_type_concept_id__name": "EHR",
+            "value_as_concept_id": 45878583,
+            "value_as_concept_id__name": "High",
+            "measurement_source_value": "81695-9",
+            "measurement_source_concept_id": 3016431,
+            "measurement_source_concept_id__name": "Microsatellite instability [Presence] in Tumor by MS PCR",
+            "value_source_value": "High"
+          }
+        ]
+      }
+    },
+    {
+      "desc": "Pathological TNM Stage Group linked to pathological T, N, M category members (mCODE) -> observations linked in fact_relationship",
+      "fhir": [
+        {
+          "resourceType": "Observation",
+          "id": "onc-obs-stage-group-1",
+          "status": "final",
+          "category": [
+            {
+              "coding": [
+                {
+                  "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                  "code": "laboratory",
+                  "display": "Laboratory"
+                }
+              ]
+            }
+          ],
+          "code": {
+            "coding": [
+              {
+                "system": "http://loinc.org",
+                "code": "21908-9",
+                "display": "Stage group.pathological Cancer"
+              }
+            ]
+          },
+          "subject": {
+            "reference": "Patient/oncology-patient-1"
+          },
+          "effectiveDateTime": "2020-11-04T08:30:00-05:00",
+          "valueCodeableConcept": {
+            "coding": [
+              {
+                "system": "http://snomed.info/sct",
+                "code": "371607005",
+                "display": "Stage IIIA"
+              }
+            ]
+          },
+          "hasMember": [
+            {
+              "reference": "Observation/onc-obs-stage-t-1"
+            },
+            {
+              "reference": "Observation/onc-obs-stage-n-1"
+            },
+            {
+              "reference": "Observation/onc-obs-stage-m-1"
+            }
+          ]
+        },
+        {
+          "resourceType": "Observation",
+          "id": "onc-obs-stage-t-1",
+          "status": "final",
+          "code": {
+            "coding": [
+              {
+                "system": "http://loinc.org",
+                "code": "21905-5",
+                "display": "Primary tumor.pathological Cancer"
+              }
+            ]
+          },
+          "subject": {
+            "reference": "Patient/oncology-patient-1"
+          },
+          "effectiveDateTime": "2020-11-04T08:30:00-05:00",
+          "valueCodeableConcept": {
+            "coding": [
+              {
+                "system": "http://snomed.info/sct",
+                "code": "371497001",
+                "display": "Pathological T3"
+              }
+            ]
+          }
+        },
+        {
+          "resourceType": "Observation",
+          "id": "onc-obs-stage-n-1",
+          "status": "final",
+          "code": {
+            "coding": [
+              {
+                "system": "http://loinc.org",
+                "code": "21906-3",
+                "display": "Regional lymph nodes.pathological Cancer"
+              }
+            ]
+          },
+          "subject": {
+            "reference": "Patient/oncology-patient-1"
+          },
+          "effectiveDateTime": "2020-11-04T08:30:00-05:00",
+          "valueCodeableConcept": {
+            "coding": [
+              {
+                "system": "http://snomed.info/sct",
+                "code": "371501004",
+                "display": "Pathological N1"
+              }
+            ]
+          }
+        },
+        {
+          "resourceType": "Observation",
+          "id": "onc-obs-stage-m-1",
+          "status": "final",
+          "code": {
+            "coding": [
+              {
+                "system": "http://loinc.org",
+                "code": "21907-1",
+                "display": "Distant metastasis.pathological Cancer"
+              }
+            ]
+          },
+          "subject": {
+            "reference": "Patient/oncology-patient-1"
+          },
+          "effectiveDateTime": "2020-11-04T08:30:00-05:00",
+          "valueCodeableConcept": {
+            "coding": [
+              {
+                "system": "http://snomed.info/sct",
+                "code": "371504007",
+                "display": "Pathological M0"
+              }
+            ]
+          }
+        }
+      ],
+      "omop": {
+        "observation": [
+          {
+            "observation_id": "id:stage_group_id",
+            "person_id": "ref:oncology-patient-1",
+            "observation_concept_id": 3009088,
+            "observation_concept_id__name": "Stage group.pathological Cancer",
+            "observation_date": "2020-11-04",
+            "observation_datetime": "2020-11-04T08:30:00",
+            "observation_type_concept_id": 32817,
+            "observation_type_concept_id__name": "EHR",
+            "value_as_concept_id": 4163872,
+            "value_as_concept_id__name": "Stage IIIA",
+            "observation_source_value": "21908-9",
+            "observation_source_concept_id": 3009088,
+            "observation_source_concept_id__name": "Stage group.pathological Cancer"
+          },
+          {
+            "observation_id": "id:stage_t_id",
+            "person_id": "ref:oncology-patient-1",
+            "observation_concept_id": 3004248,
+            "observation_concept_id__name": "Primary tumor.pathological Cancer",
+            "observation_date": "2020-11-04",
+            "observation_datetime": "2020-11-04T08:30:00",
+            "observation_type_concept_id": 32817,
+            "observation_type_concept_id__name": "EHR",
+            "value_as_concept_id": 4163863,
+            "value_as_concept_id__name": "Pathological T3",
+            "observation_source_value": "21905-5",
+            "observation_source_concept_id": 3004248,
+            "observation_source_concept_id__name": "Primary tumor.pathological Cancer"
+          },
+          {
+            "observation_id": "id:stage_n_id",
+            "person_id": "ref:oncology-patient-1",
+            "observation_concept_id": 3027376,
+            "observation_concept_id__name": "Regional lymph nodes.pathological Cancer",
+            "observation_date": "2020-11-04",
+            "observation_datetime": "2020-11-04T08:30:00",
+            "observation_type_concept_id": 32817,
+            "observation_type_concept_id__name": "EHR",
+            "value_as_concept_id": 4163867,
+            "value_as_concept_id__name": "Pathological N1",
+            "observation_source_value": "21906-3",
+            "observation_source_concept_id": 3027376,
+            "observation_source_concept_id__name": "Regional lymph nodes.pathological Cancer"
+          },
+          {
+            "observation_id": "id:stage_m_id",
+            "person_id": "ref:oncology-patient-1",
+            "observation_concept_id": 3011967,
+            "observation_concept_id__name": "Distant metastasis.pathological Cancer",
+            "observation_date": "2020-11-04",
+            "observation_datetime": "2020-11-04T08:30:00",
+            "observation_type_concept_id": 32817,
+            "observation_type_concept_id__name": "EHR",
+            "value_as_concept_id": 4163870,
+            "value_as_concept_id__name": "Pathological M0",
+            "observation_source_value": "21907-1",
+            "observation_source_concept_id": 3011967,
+            "observation_source_concept_id__name": "Distant metastasis.pathological Cancer"
+          }
+        ],
+        "fact_relationship": [
+          {
+            "domain_concept_id_1": 27,
+            "fact_id_1": "id:stage_group_id",
+            "domain_concept_id_2": 27,
+            "fact_id_2": "id:stage_t_id",
+            "relationship_concept_id": 44818790,
+            "relationship_concept_id__name": "Has panel member"
+          },
+          {
+            "domain_concept_id_1": 27,
+            "fact_id_1": "id:stage_group_id",
+            "domain_concept_id_2": 27,
+            "fact_id_2": "id:stage_n_id",
+            "relationship_concept_id": 44818790,
+            "relationship_concept_id__name": "Has panel member"
+          },
+          {
+            "domain_concept_id_1": 27,
+            "fact_id_1": "id:stage_group_id",
+            "domain_concept_id_2": 27,
+            "fact_id_2": "id:stage_m_id",
+            "relationship_concept_id": 44818790,
+            "relationship_concept_id__name": "Has panel member"
+          },
+          {
+            "domain_concept_id_1": 27,
+            "fact_id_1": "id:stage_t_id",
+            "domain_concept_id_2": 27,
+            "fact_id_2": "id:stage_group_id",
+            "relationship_concept_id": 44818873,
+            "relationship_concept_id__name": "Panel member of"
+          },
+          {
+            "domain_concept_id_1": 27,
+            "fact_id_1": "id:stage_n_id",
+            "domain_concept_id_2": 27,
+            "fact_id_2": "id:stage_group_id",
+            "relationship_concept_id": 44818873,
+            "relationship_concept_id__name": "Panel member of"
+          },
+          {
+            "domain_concept_id_1": 27,
+            "fact_id_1": "id:stage_m_id",
+            "domain_concept_id_2": 27,
+            "fact_id_2": "id:stage_group_id",
+            "relationship_concept_id": 44818873,
+            "relationship_concept_id__name": "Panel member of"
+          }
+        ]
+      }
+    }
+  ]
+}

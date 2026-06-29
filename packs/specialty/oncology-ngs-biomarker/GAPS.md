@@ -16,43 +16,34 @@ This document tracks known discrepancies and mapping gaps between FHIR clinical 
 * **Variant Observations:** Map the structured variants into the `observation` table with `observation_concept_id` pointing to LOINC genomic concepts (e.g., [LOINC 48018-6 (Gene variant analysis)](https://loinc.org/48018-6/)), and store the HGVS string in the `value_as_string` column.
 * **OHDSI Alignment:** In future database updates, align with the [OHDSI Oncology WG Genomic Extension](https://ohdsi.github.io/Oncology/genomics.html). The OHDSI Genomics WG specifies that until a dedicated genomic table structure is integrated into the core CDM, variant detections must be recorded in the `observation` table. Anchoring these variant detections to standard LOINC panels (such as `48018-6`) maintains consistency with standard observation querying guidelines while preserving structured genomic strings (HGVS, HGNC symbols) inside text-based columns.
 
-### Technical Implementation Tasks
-<a name="task-1"></a>
-1. **[MODIFY] [DiagnosticReport__measurement.view.json](/mapspec/views/DiagnosticReport__measurement.view.json):**
-   * Update the JSON-on-FHIR view definition to traverse `DiagnosticReport.result` (references to nested `Observation` resources).
-   * Extract the nested variant observation IDs, codes, and text-based values (such as `Observation.valueString` carrying the HGVS variant string `p.L858R`).
-   * Extract the gene components (such as `EGFR` from `Observation.component`).
-<a name="task-2"></a>
-2. **[MODIFY] [_resolve_diagnosticreport.sql](/mapspec/etl/_resolve_diagnosticreport.sql):**
-   * Update the staging resolver to parse and join the newly extracted nested variant codings through `cm.fhir_system_to_omop_vocab` to map them to standard OHDSI concepts.
-<a name="task-3"></a>
-3. **[MODIFY] [DiagnosticReport__observation.sql](/mapspec/etl/DiagnosticReport__observation.sql):**
-   * Filter the resolved staging output where the target domain is `Observation`.
-   * Insert rows into `cdm_ours_fhir.observation` mapping `observation_concept_id` to LOINC `48018-6`, `value_as_string` to the HGVS string, and `observation_source_value` to the raw HUGO/HGVS input string.
+### Technical Implementation Mappings (Completed)
+1. **[MODIFY] [Observation__measurement.view.json](file:///Users/dmitryshirokov/Downloads/FHIR2OMOP/fhir2omop/mapspec/views/Observation__measurement.view.json):**
+   * Updated the JSON-on-FHIR view definition to extract nested variant codes/displays (such as gene symbol from LOINC `48005-3` and HGVS string from LOINC `48004-6`) and `hasMember` linkages (`has_members`).
+2. **[MODIFY] [_resolve_observation.sql](file:///Users/dmitryshirokov/Downloads/FHIR2OMOP/fhir2omop/mapspec/etl/_resolve_observation.sql):**
+   * Updated the staging resolver to parse and propagate gene symbol, HGVS, and member references, adjusting the value-presence filters to retain empty genomic variant parents with components.
+3. **[MODIFY] [Observation__observation.sql](file:///Users/dmitryshirokov/Downloads/FHIR2OMOP/fhir2omop/mapspec/etl/Observation__observation.sql):**
+   * Mapped HGVS changes to `value_as_string` and `value_source_value` under LOINC `48018-6`.
+4. **[NEW] [Observation__fact_relationship.sql](file:///Users/dmitryshirokov/Downloads/FHIR2OMOP/fhir2omop/mapspec/etl/Observation__fact_relationship.sql):**
+   * Mapped TNM Stage Group panels to sub-observations using relationship concept IDs `44818790` and `44818873` in `fact_relationship`.
 
 ---
   
 ## 2. Metastatic Site Relationships
 
 ### Problem Description
-1. **Hierarchy Loss:** FHIR represents primary and secondary (metastatic) tumor sites as separate `Condition` resources. In OMOP, they are represented as distinct, independent rows in `condition_occurrence`. *(Remediation: see [Task 1](#m-task-1) and [Task 2](#m-task-2))*
-2. **Data Disconnection:** On write, the relational parent-child link between the primary cancer and its metastases is lost. This prevents researchers from tracing secondary site progression back to the primary origin. *(Remediation: see [Task 2](#m-task-2))*
+1. **Hierarchy Loss:** FHIR represents primary and secondary (metastatic) tumor sites as separate `Condition` resources. In OMOP, they are represented as distinct, independent rows in `condition_occurrence`. *(Remediation: see completed tasks below)*
+2. **Data Disconnection:** On write, the relational parent-child link between the primary cancer and its metastases is lost. This prevents researchers from tracing secondary site progression back to the primary origin. *(Remediation: see completed tasks below)*
 
 ### Remediation Proposal & OHDSI Rationale
 * **Relational Linkage:** Populate the [OMOP CDM v5.4 fact_relationship](https://ohdsi.github.io/CommonDataModel/cdm54.html#FACT_RELATIONSHIP) table, linking the primary tumor `condition_occurrence_id` to the secondary tumor `condition_occurrence_id`.
 * **Relationship Concept:** Use standard OHDSI relationship concepts (such as relationship concept ID `44818765` for "Metastasis of").
 * **Why we suggest this:** Standard OHDSI Oncology conventions (see [OHDSI Oncology WG Disease Progression & Metastasis](https://ohdsi.github.io/Oncology/oncologyEpisode.html)) require the use of the `fact_relationship` table to preserve hierarchy and disease progression. Without this link, secondary diagnoses cannot be traced back to their primary site of origin, which is a prerequisite for cancer progression-free survival analyses and oncology clinical research.
 
-### Technical Implementation Tasks
-<a name="m-task-1"></a>
-1. **[MODIFY] [Condition__condition_occurrence.view.json](/mapspec/views/Condition__condition_occurrence.view.json):**
-   * Extract the linkage identifier pointing to the primary tumor from the FHIR `Condition.extension` representing related conditions (e.g. `http://hl7.org/fhir/StructureDefinition/condition-related`).
-   * Output this value in a new staging column `primary_condition_ref`.
-<a name="m-task-2"></a>
-2. **[NEW] `Condition__fact_relationship.sql`:**
-   * Create a new Stage-2 ETL script in `mapspec/etl/` to map the bidirectional primary-metastatic links into the `fact_relationship` table:
-     * Perform a self-join on the resolved condition staging table to pair the metastatic `condition_occurrence_id` with its parent primary `condition_occurrence_id` (using `referenceToId()`).
-     * Insert a pair of rows into `cdm_ours_fhir.fact_relationship` (Primary-to-Metastatic with concept `44818854` "Primary of", and Metastatic-to-Primary with concept `44818765` "Metastasis of").
+### Technical Implementation Mappings (Completed)
+1. **[MODIFY] [Condition__condition_occurrence.view.json](file:///Users/dmitryshirokov/Downloads/FHIR2OMOP/fhir2omop/mapspec/views/Condition__condition_occurrence.view.json):**
+   * Extracted primary tumor references from the FHIR `Condition.extension` representing related conditions.
+2. **[NEW] [Condition__fact_relationship.sql](file:///Users/dmitryshirokov/Downloads/FHIR2OMOP/fhir2omop/mapspec/etl/Condition__fact_relationship.sql):**
+   * Created new Stage-2 ETL script to map bidirectional primary-metastatic links (`Primary of` and `Metastasis of`) into `fact_relationship`.
 
 
 ---

@@ -3,7 +3,7 @@
 This pack contains FHIR-to-OMOP mapping definitions and test specifications optimized for oncology datasets, Next-Generation Sequencing (NGS) reports, and tumor biopsy specimens.
 
 
-## simplified mapping
+## Mapping
  for the basic mapping of oncology diagnoses, genomic report text, and tumor specimens, you do not have to write new SQL-on-FHIR views or SQL ELT scripts.
 
 These cases reuse the existing, core mapping pipelines:
@@ -30,6 +30,7 @@ graph TD
         F_Cond[Condition]
         F_Spec[Specimen]
         F_DR[DiagnosticReport]
+        F_Obs[Observation]
     end
 
     subgraph omop ["OMOP Target (v5.4)"]
@@ -38,6 +39,8 @@ graph TD
         O_Cond[condition_occurrence]
         O_Spec[specimen]
         O_Note[note]
+        O_Meas[measurement]
+        O_Obs[observation]
         O_Fact[fact_relationship]
     end
 
@@ -47,13 +50,16 @@ graph TD
     F_Cond -->|Condition__fact_relationship.sql| O_Fact
     F_Spec -->|Specimen__specimen.sql| O_Spec
     F_DR -->|DiagnosticReport__note.sql| O_Note
+    F_Obs -->|Observation__observation.sql| O_Obs
+    F_Obs -->|Observation__measurement.sql| O_Meas
+    F_Obs -->|Observation__fact_relationship.sql| O_Fact
 ```
 
 ---
 
 ## Scope & Target Models
 
-The pack covers three main mapping aspects to represent cancer patient data:
+The pack covers four main mapping aspects to represent cancer patient data:
 
 1. **Oncology Diagnosis (`condition--condition-occurrence--oncology-diagnosis.json`):**
    - **Clinical Simulation:** A patient diagnosed with primary lung cancer (adenocarcinoma of lung) and a secondary metastatic tumor in the brain.
@@ -91,6 +97,21 @@ The pack covers three main mapping aspects to represent cancer patient data:
    - Maps biopsy collection methods, anatomical sites (primary vs. metastatic tissue), and sample preservation to the [OMOP CDM v5.4 specimen](https://ohdsi.github.io/CommonDataModel/cdm54.html#SPECIMEN) table.
    - Maps from [FHIR R4 Specimen](https://hl7.org/fhir/R4/specimen.html).
    - *Note: Shares the underlying pipeline and SQL logic defined in [`Specimen__specimen.sql`](/mapspec/etl/Specimen__specimen.sql) with the core specimen cases.*
+
+4. **Genomics & Staging Panels (`observation--measurement--genomics-staging.json`):**
+   - **Clinical Simulation:** Structured genomic findings (somatic variants, TMB, MSI) and TNM staging panel linkages for cancer patients.
+   - **FHIR Input:**
+     - An `Observation` carrying EGFR p.L858R somatic mutation details (LOINC `48018-6` variant panel with `48005-3` Gene Studied = `"EGFR"` and `48004-6` DNA Change = `"p.L858R"` components).
+     - An `Observation` carrying TMB level of `12.5 mut/Mb` (LOINC `94076-7`).
+     - An `Observation` carrying MSI-High status (LOINC `81695-9` valueCodeableConcept `LA26284-4` "High").
+     - A Pathological TNM Stage Group `Observation` (LOINC `21908-9` value SNOMED `371607005` "Stage IIIA") linked via `hasMember` to Pathological T (LOINC `21905-5`), N (LOINC `21906-3`), and M (LOINC `21907-1`) category observations.
+   - **OMOP Output:**
+     - EGFR Variant: One `observation` row mapped to LOINC `3011961` with `value_as_string` = `"p.L858R"` and `observation_source_value` = `"EGFR p.L858R"`.
+     - TMB & MSI: Mapped to the `measurement` table with concepts `3027815` (TMB, `value_as_number` = `12.5`) and `3016431` (MSI, `value_as_concept_id` = `45878583` "High").
+     - Stage Group & TNM categories: Mapped to the `observation` table. Links between Stage Group and T, N, M categories mapped to `fact_relationship` (relationship concept IDs `44818790` "Has panel member" and `44818873` "Panel member of").
+   - Maps from [FHIR R4 Observation](https://hl7.org/fhir/R4/observation.html).
+   - *Note: Shares the underlying pipeline and SQL logic defined in [`Observation__observation.sql`](/mapspec/etl/Observation__observation.sql), [`Observation__measurement.sql`](/mapspec/etl/Observation__measurement.sql), and [`Observation__fact_relationship.sql`](/mapspec/etl/Observation__fact_relationship.sql).*
+
 
 
 

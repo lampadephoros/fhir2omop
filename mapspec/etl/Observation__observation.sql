@@ -20,7 +20,10 @@ SELECT
 
     32817                                                                   AS observation_type_concept_id,
     r.value_number                                                          AS value_as_number,
-    left(r.value_string, 60)                                                AS value_as_string,
+    CASE
+        WHEN r.std_concept_id = 3011961 THEN left(r.hgvs_string, 60)
+        ELSE left(r.value_string, 60)
+    END                                                                     AS value_as_string,
     r.value_as_concept_id                                                   AS value_as_concept_id,
     NULL::integer                                                           AS qualifier_concept_id,
     r.unit_concept_id                                                       AS unit_concept_id,
@@ -29,11 +32,17 @@ SELECT
     referenceToId(r.encounter_id)                                           AS visit_occurrence_id,
     NULL::bigint                                                            AS visit_detail_id,
 
-    left(COALESCE(r.src_code, r.code_text), 50)                             AS observation_source_value,
+    CASE
+        WHEN r.std_concept_id = 3011961 THEN left(COALESCE(r.gene_symbol || ' ' || r.hgvs_string, r.src_code, r.code_text), 50)
+        ELSE left(COALESCE(r.src_code, r.code_text), 50)
+    END                                                                     AS observation_source_value,
     r.src_concept_id                                                        AS observation_source_concept_id,
     left(r.value_unit_text, 50)                                             AS unit_source_value,
     left(r.qualifier_code, 50)                                              AS qualifier_source_value,
-    left(r.value_text, 50)                                                  AS value_source_value,
+    CASE
+        WHEN r.std_concept_id = 3011961 THEN left(r.hgvs_string, 50)
+        ELSE left(r.value_text, 50)
+    END                                                                     AS value_source_value,
     NULL::bigint                                                            AS observation_event_id,
     NULL::integer                                                           AS obs_event_field_concept_id
 
