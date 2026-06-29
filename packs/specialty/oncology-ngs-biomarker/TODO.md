@@ -24,6 +24,13 @@ Status snapshot and task checklist of the mappings, test cases, and unresolved g
  
  ---
  
+## Next (Future Roadmap)
+
+- [ ] **Targeted Therapy Mappings (Drug Exposure)** — Integrate the clinical case narrative with treatment records (e.g., mapping TKI prescriptions or immunotherapy administrations to `drug_exposure`).
+- [ ] **Expand Oncology Biomarkers** — Add test fixtures and cases for other common biomarkers like ALK gene fusions (e.g., EML4-ALK) or KRAS mutations.
+ 
+ ---
+ 
  ## References
  
  - [HL7 FHIR Genomics Reporting Implementation Guide](http://hl7.org/fhir/uv/genomics-reporting/)

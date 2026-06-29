@@ -25,6 +25,7 @@ gantt
     section Biopsy & Pathology
     Liquid Biopsy (cfDNA)             :active, spec1, 2020-11-04, 2020-11-04
     Solid Tumor Biopsy (FFPE/Frozen)  :active, spec2, 2020-11-04, 2020-11-04
+    Structured Genomics & TNM Staging :active, obs, 2020-11-04, 2020-11-04
     section Genomics
     NGS Genomics Report Released      :active, dr, 2020-11-05, 2020-11-05
     section Monitoring
@@ -56,14 +57,18 @@ To guide targeted therapy, a comprehensive genomic profiling protocol is initiat
 * **Tissue Stewardship:** Optimizing the division of solid tumor tissue between FFPE (morphology) and Frozen (genomics) is critical when tissue cellularity is low.
 * **Precise Anatomical Mapping:** Record the exact anatomical site of extraction (e.g., SNOMED-CT `361362002` Left upper lobe) to track spatial heterogeneity of the tumor over time.
 
-### Stage 3: Next-Generation Sequencing (NGS)
+### Stage 3: Next-Generation Sequencing (NGS) & Staging
 **Clinical Procedure:**
-The extracted cfDNA from the liquid biopsy (or DNA/RNA from the frozen solid tissue) undergoes NGS to identify actionable somatic mutations. The laboratory generates a diagnostic report (LOINC `11502-2`). For this patient, the report identifies an **EGFR p.L858R mutation**, a critical biomarker for lung adenocarcinoma.
+The extracted cfDNA from the liquid biopsy (or DNA/RNA from the frozen solid tissue) undergoes NGS to identify actionable somatic mutations and clinical biomarkers. Concurrently, the pathologic cancer stage is determined.
+1. **Somatic Variant Identifying:** The sequencing identifies a somatic **EGFR p.L858R mutation** (LOINC `48018-6` variant panel).
+2. **Immunotherapy Biomarkers:** The laboratory measures Tumor Mutational Burden (TMB) at **12.5 mut/Mb** (LOINC `94076-7`) and Microsatellite Instability (MSI) status as **High** (LOINC `81695-9`).
+3. **Cancer Staging:** Pathological staging establishes a **Stage IIIA** group (LOINC `21908-9`), comprised of T3 (LOINC `21905-5`), N1 (LOINC `21906-3`), and M0 (LOINC `21907-1`) staging categories.
 
 **Best Practices:**
-* **Standardized Reporting:** Genomic findings must be reported using standardized nomenclature (e.g., HGVS for sequence variants).
-* **Actionability Linkage:** The presence of the EGFR p.L858R mutation immediately qualifies the patient for specific targeted therapies (e.g., EGFR Tyrosine Kinase Inhibitors like Osimertinib).
-* **Data Integration:** Ensure the unstructured findings (e.g., PDF reports) and structured variant data (HGVS strings) are both captured in the EHR/CDM for clinical decision support.
+* **Standardized Reporting:** Genomic findings must be reported using standardized nomenclature (e.g., HGVS strings like `p.L858R` for sequence variants) and standard gene symbols (HUGO/HGNC).
+* **Actionability Linkage:** The presence of the EGFR p.L858R mutation immediately qualifies the patient for targeted EGFR Tyrosine Kinase Inhibitors (TKI) such as Osimertinib. High TMB or MSI-High status guides potential treatment with immune checkpoint inhibitors (e.g., Pembrolizumab).
+* **Panel-Member Association:** TNM staging categories must be linked directly to their parent Stage Group observation to preserve mCODE structural hierarchies.
+* **Data Integration:** Capture raw unstructured reports (notes) alongside discrete, structured measurements (TMB, MSI) and staging observations to ensure semantic utility for downstream analytics.
 
 ### Stage 4: Longitudinal Monitoring & Metastasis Tracking
 **Clinical Procedure:**

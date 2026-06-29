@@ -20,6 +20,7 @@ gantt
     section Events
     Lung Cancer Diagnosis             :active, cond1, 2020-10-15, 2020-10-15
     Liquid Biopsy Blood Draw          :active, spec, 2020-11-04, 2020-11-04
+    Structured Genomics & TNM Staging :active, obs, 2020-11-04, 2020-11-04
     NGS Genomics Report Released      :active, dr, 2020-11-05, 2020-11-05
     Brain Metastasis Diagnosis        :active, cond2, 2021-03-12, 2021-03-12
 ```
@@ -60,3 +61,14 @@ gantt
   * Code: LOINC `11502-2` (*Laboratory report*)
   * Findings (Conclusion text): *"Positive for somatic variants: EGFR p.L858R mutation detected."*
 * **OMOP Target representation:** `note` row storing the raw report findings verbatim in the `note_text` field for clinical NLP pipelines.
+
+### Event 4: Structured Genomic Findings & TNM Cancer Staging Panels (November 4, 2020)
+* **Clinical Scenario:** Alongside the raw report text, the clinical database extracts and records structured genomics assertions and mCODE staging parameters as individual observation entries:
+  1. **EGFR Variant:** A structured observation representing the `EGFR p.L858R` somatic mutation.
+  2. **Biomarkers:** Quantitative findings for Tumor Mutational Burden (TMB) and Microsatellite Instability (MSI).
+  3. **TNM Staging:** A pathological cancer Stage Group panel containing pathological T, N, and M components.
+* **Mapped FHIR Resources:** [`Observation/onc-obs-variant-1`, `Observation/onc-obs-tmb-1`, `Observation/onc-obs-msi-1`, `Observation/onc-obs-stage-group-1`, `Observation/onc-obs-stage-t-1`, `Observation/onc-obs-stage-n-1`, and `Observation/onc-obs-stage-m-1`](/cases/observation--measurement--genomics-staging.json)
+  * EGFR Observation: Mapped to standard concept `3011961` (*Gene variant analysis*) with `value_as_string` = `"p.L858R"` and `observation_source_value` = `"EGFR p.L858R"`.
+  * TMB & MSI: Mapped to the `measurement` table with concepts `3027815` (TMB, `value_as_number` = `12.5`) and `3016431` (MSI, `value_as_concept_id` = `45878583` "High").
+  * Stage Group & Categories: Mapped to the `observation` table. Links between Stage Group and T, N, M categories mapped to `fact_relationship` (relationship concept IDs `44818790` "Has panel member" and `44818873` "Panel member of").
+

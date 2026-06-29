@@ -29,8 +29,8 @@ graph TD
         F_Pat[Patient]
         F_Cond[Condition]
         F_Spec[Specimen]
-        F_DR[DiagnosticReport]
         F_Obs[Observation]
+        F_DR[DiagnosticReport]
     end
 
     subgraph omop ["OMOP Target (v5.4)"]
@@ -38,10 +38,10 @@ graph TD
         O_Per[person]
         O_Cond[condition_occurrence]
         O_Spec[specimen]
-        O_Note[note]
         O_Meas[measurement]
         O_Obs[observation]
         O_Fact[fact_relationship]
+        O_Note[note]
     end
 
 
@@ -49,17 +49,17 @@ graph TD
     F_Cond -->|Condition__condition_occurrence.sql| O_Cond
     F_Cond -->|Condition__fact_relationship.sql| O_Fact
     F_Spec -->|Specimen__specimen.sql| O_Spec
-    F_DR -->|DiagnosticReport__note.sql| O_Note
     F_Obs -->|Observation__observation.sql| O_Obs
     F_Obs -->|Observation__measurement.sql| O_Meas
     F_Obs -->|Observation__fact_relationship.sql| O_Fact
+    F_DR -->|DiagnosticReport__note.sql| O_Note
 ```
 
 ---
 
 ## Scope & Target Models
 
-The pack covers four main mapping aspects to represent cancer patient data:
+The pack covers four main mapping aspects to represent cancer patient data in chronological order:
 
 1. **Oncology Diagnosis (`condition--condition-occurrence--oncology-diagnosis.json`):**
    - **Clinical Simulation:** A patient diagnosed with primary lung cancer (adenocarcinoma of lung) and a secondary metastatic tumor in the brain.
@@ -75,16 +75,7 @@ The pack covers four main mapping aspects to represent cancer patient data:
    - Maps from [FHIR R4 Condition](https://hl7.org/fhir/R4/condition.html).
    - *Note: Shares the underlying pipeline and SQL logic defined in [`Condition__condition_occurrence.sql`](/mapspec/etl/Condition__condition_occurrence.sql) and [`Condition__fact_relationship.sql`](/mapspec/etl/Condition__fact_relationship.sql) with the core condition cases.*
 
-2. **Oncology NGS Reports (`diagnosticreport--note--oncology-ngs.json`):**
-   - **Clinical Simulation:** Recording the text output of a Next-Generation Sequencing (NGS) genomic panel report.
-   - **FHIR Input:** A [`DiagnosticReport`](https://build.fhir.org/ig/HL7/genomics-reporting/StructureDefinition-genomic-report.html) with [LOINC](https://hl7.org/fhir/R4/valueset-report-codes.html) [code `11502-2`](https://loinc.org/11502-2) ("Laboratory report") and a textual variant summary in the `conclusion` field (*"Positive for somatic variants: EGFR p.L858R mutation detected."*).
-   - **OMOP Output:** One `note` row where `note_text` contains the report's text findings verbatim, `note_type_concept_id` is set to `32817` ("EHR"), and language is verified as English (`4180186`).
-   - Maps clinical genomics and NGS reports (somatic variants, gene fusions, copy number variations, TMB/MSI status) into the [OMOP CDM v5.4 note](https://ohdsi.github.io/CommonDataModel/cdm54.html#NOTE) table for raw report storage.
-   - Bridges structured genomic assertions into the `observation` and `measurement` tables.
-   - Maps from [FHIR R4 DiagnosticReport](https://hl7.org/fhir/R4/diagnosticreport.html) based on the [HL7 Clinical Genomics Reporting IG](http://hl7.org/fhir/uv/genomics-reporting/).
-   - *Note: Shares the underlying pipeline and SQL logic defined in [`DiagnosticReport__note.sql`](/mapspec/etl/DiagnosticReport__note.sql) with the core diagnosticreport note cases.*
-
-3. **Tumor Biopsy Details (`specimen--specimen--oncology-tumor-biopsy.json`):**
+2. **Tumor Biopsy Details (`specimen--specimen--oncology-tumor-biopsy.json`):**
    - **Clinical Simulation:** Biopsy specimens collected from patients for oncology genetic testing, representing both liquid biopsy (blood draw) and solid tumor tissue biopsies with preservation details.
    - **FHIR Input:** 
      - A liquid `Specimen` of type SNOMED `119297000` ("Blood specimen"), collection body site SNOMED `368208006` ("Left upper arm structure"), and quantity `10 mL`.
@@ -98,7 +89,7 @@ The pack covers four main mapping aspects to represent cancer patient data:
    - Maps from [FHIR R4 Specimen](https://hl7.org/fhir/R4/specimen.html).
    - *Note: Shares the underlying pipeline and SQL logic defined in [`Specimen__specimen.sql`](/mapspec/etl/Specimen__specimen.sql) with the core specimen cases.*
 
-4. **Genomics & Staging Panels (`observation--measurement--genomics-staging.json`):**
+3. **Genomics & Staging Panels (`observation--measurement--genomics-staging.json`):**
    - **Clinical Simulation:** Structured genomic findings (somatic variants, TMB, MSI) and TNM staging panel linkages for cancer patients.
    - **FHIR Input:**
      - An `Observation` carrying EGFR p.L858R somatic mutation details (LOINC `48018-6` variant panel with `48005-3` Gene Studied = `"EGFR"` and `48004-6` DNA Change = `"p.L858R"` components).
@@ -111,6 +102,15 @@ The pack covers four main mapping aspects to represent cancer patient data:
      - Stage Group & TNM categories: Mapped to the `observation` table. Links between Stage Group and T, N, M categories mapped to `fact_relationship` (relationship concept IDs `44818790` "Has panel member" and `44818873` "Panel member of").
    - Maps from [FHIR R4 Observation](https://hl7.org/fhir/R4/observation.html).
    - *Note: Shares the underlying pipeline and SQL logic defined in [`Observation__observation.sql`](/mapspec/etl/Observation__observation.sql), [`Observation__measurement.sql`](/mapspec/etl/Observation__measurement.sql), and [`Observation__fact_relationship.sql`](/mapspec/etl/Observation__fact_relationship.sql).*
+
+4. **Oncology NGS Reports (`diagnosticreport--note--oncology-ngs.json`):**
+   - **Clinical Simulation:** Recording the text output of a Next-Generation Sequencing (NGS) genomic panel report.
+   - **FHIR Input:** A [`DiagnosticReport`](https://build.fhir.org/ig/HL7/genomics-reporting/StructureDefinition-genomic-report.html) with [LOINC](https://hl7.org/fhir/R4/valueset-report-codes.html) [code `11502-2`](https://loinc.org/11502-2) ("Laboratory report") and a textual variant summary in the `conclusion` field (*"Positive for somatic variants: EGFR p.L858R mutation detected."*).
+   - **OMOP Output:** One `note` row where `note_text` contains the report's text findings verbatim, `note_type_concept_id` is set to `32817` ("EHR"), and language is verified as English (`4180186`).
+   - Maps clinical genomics and NGS reports (somatic variants, gene fusions, copy number variations, TMB/MSI status) into the [OMOP CDM v5.4 note](https://ohdsi.github.io/CommonDataModel/cdm54.html#NOTE) table for raw report storage.
+   - Bridges structured genomic assertions into the `observation` and `measurement` tables.
+   - Maps from [FHIR R4 DiagnosticReport](https://hl7.org/fhir/R4/diagnosticreport.html) based on the [HL7 Clinical Genomics Reporting IG](http://hl7.org/fhir/uv/genomics-reporting/).
+   - *Note: Shares the underlying pipeline and SQL logic defined in [`DiagnosticReport__note.sql`](/mapspec/etl/DiagnosticReport__note.sql) with the core diagnosticreport note cases.*
 
 
 
