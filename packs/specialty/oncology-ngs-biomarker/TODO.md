@@ -32,7 +32,10 @@ Status snapshot and task checklist of the mappings, test cases, and unresolved g
 
 ## Next (Future Roadmap)
 
-*(No tasks currently scheduled.)*
+- [ ] **Oncology Episode Mappings (`episode` & `episode_event`)** — Map oncology timelines and patient journeys to the standard OHDSI oncology Episode models to track diagnostic and treatment cycles.
+- [ ] **Anatomical Site Modifier Mappings** — Map granular metastatic tumor anatomical site details as modifier measurements connected to primary diagnoses.
+- [ ] **Lossless Genomics Extension Mapping (`ngs_variant`)** — Define and build mappings to custom variant occurrence tables to capture transcript names, genomic coordinates, and reference/alternate alleles without detail loss.
+
  
  ---
  
