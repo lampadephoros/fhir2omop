@@ -33,13 +33,26 @@ gantt
   * Two `condition_occurrence` rows mapping the diagnoses standardly to concepts `4115276` (*Adenocarcinoma of lung*) and `436659` (*Secondary malignant neoplasm of brain*).
   * Two bidirectional `fact_relationship` rows with relationship concept IDs `44818854` ("Primary of") and `44818765` ("Metastasis of") linking the two condition occurrences.
 
-### Event 2: Tumor Specimen Collection (November 4, 2020)
-* **Clinical Scenario:** To guide targeted therapy, the clinical team orders genomic sequencing. A liquid biopsy blood draw is performed at the hospital's outpatient lab.
-* **Mapped FHIR Resource:** [`Specimen/onc-spec-1`](/cases/specimen--specimen--oncology-tumor-biopsy.json)
-  * Type: SNOMED-CT `119297000` (*Blood specimen*)
-  * Site: SNOMED-CT `368208006` (*Left upper arm structure*)
-  * Quantity: `10 mL`
-* **OMOP Target representation:** `specimen` row mapping the blood draw to standard concept `4001225` (*Blood specimen*) and collection site to `4283159` (*Left upper arm structure*).
+### Event 2: Tumor Specimen Collection & Preservation (November 4, 2020)
+* **Clinical Scenario:** To guide targeted therapy, the clinical team orders genomic sequencing. The protocol requires collecting both cell-free DNA via a liquid biopsy (blood draw) and a solid tissue biopsy of the primary lung tumor (left upper lobe). The solid tumor tissue is divided: one portion is preserved using Formalin-Fixation Paraffin-Embedding (FFPE) for histopathology and immunohistochemistry, while another portion is Fresh Frozen for molecular diagnostics.
+* **Mapped FHIR Resources:** [`Specimen/onc-spec-1`, `Specimen/onc-spec-2`, and `Specimen/onc-spec-3`](/cases/specimen--specimen--oncology-tumor-biopsy.json)
+  1. **Liquid Biopsy:**
+     - Type: SNOMED-CT `119297000` (*Blood specimen*)
+     - Site: SNOMED-CT `368208006` (*Left upper arm structure*)
+     - Quantity: `10 mL`
+     - Mapped to: `specimen_concept_id` = `4001225` (*Blood specimen*), `anatomic_site_concept_id` = `4283159` (*Left upper arm structure*), `quantity` = `10`.
+  2. **Solid Biopsy (FFPE):**
+     - Type: SNOMED-CT `258435002` (*Tissue specimen*)
+     - Site: SNOMED-CT `361362002` (*Structure of left upper lobe of lung*)
+     - Quantity: `5 mg`
+     - Processing: SNOMED-CT `434643000` (*Formalin fixed paraffin embedded sectioning*)
+     - Mapped to: `specimen_concept_id` = `4264660` (*Formalin-fixed paraffin-embedded tissue specimen*), `anatomic_site_concept_id` = `4031641` (*Structure of left upper lobe of lung*), `quantity` = `5`.
+  3. **Solid Biopsy (Frozen):**
+     - Type: SNOMED-CT `258435002` (*Tissue specimen*)
+     - Site: SNOMED-CT `361362002` (*Structure of left upper lobe of lung*)
+     - Quantity: `3 mg`
+     - Processing: SNOMED-CT `429215003` (*Freezing*)
+     - Mapped to: `specimen_concept_id` = `4264661` (*Frozen tissue specimen*), `anatomic_site_concept_id` = `4031641` (*Structure of left upper lobe of lung*), `quantity` = `3`.
 
 ### Event 3: NGS Genomic Report Release (November 5, 2020)
 * **Clinical Scenario:** Next-Generation Sequencing (NGS) is performed on the cell-free DNA (cfDNA) extracted from the blood specimen. The genomic laboratory releases the final diagnostic report, showing somatic mutation positive for the `EGFR p.L858R` mutation.

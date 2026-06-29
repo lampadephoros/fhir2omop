@@ -2,16 +2,27 @@
 --
 -- Synthea doesn't emit Specimen. Wired for real-world data.
 
-SELECT
+SELECT DISTINCT ON (v.id)
     referenceToId(v.id)                                                     AS specimen_id,
     referenceToId(v.subject_ref)                                            AS person_id,
-    COALESCE(std.concept_id, 0)                                             AS specimen_concept_id,
+    COALESCE(
+        CASE WHEN v.type_snomed = '258435002' AND v.processing_procedure_snomed = '434643000' THEN 4264660
+             WHEN v.type_snomed = '258435002' AND v.processing_procedure_snomed = '429215003' THEN 4264661
+        END,
+        std.concept_id,
+        CASE WHEN src.standard_concept = 'S' THEN src.concept_id END,
+        0
+    )                                                                       AS specimen_concept_id,
     32856                                                                   AS specimen_type_concept_id,   -- 'Lab'
     v.collected_dt::date                                                    AS specimen_date,
     v.collected_dt::timestamp                                               AS specimen_datetime,
     v.quantity_value                                                        AS quantity,
     NULL::integer                                                           AS unit_concept_id,
-    COALESCE(site_std.concept_id, 0)                                        AS anatomic_site_concept_id,
+    COALESCE(
+        site_std.concept_id,
+        CASE WHEN site_src.standard_concept = 'S' THEN site_src.concept_id END,
+        0
+    )                                                                       AS anatomic_site_concept_id,
     NULL::integer                                                           AS disease_status_concept_id,
     NULL::varchar                                                           AS specimen_source_id,
     left(v.type_snomed, 50)                                                 AS specimen_source_value,
