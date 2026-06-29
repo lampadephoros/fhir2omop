@@ -40,9 +40,9 @@ This document tracks known discrepancies and mapping gaps between FHIR clinical 
 * **Why we suggest this:** Standard OHDSI Oncology conventions (see [OHDSI Oncology WG Disease Progression & Metastasis](https://ohdsi.github.io/Oncology/oncologyEpisode.html)) require the use of the `fact_relationship` table to preserve hierarchy and disease progression. Without this link, secondary diagnoses cannot be traced back to their primary site of origin, which is a prerequisite for cancer progression-free survival analyses and oncology clinical research.
 
 ### Technical Implementation Mappings (Completed)
-1. **[MODIFY] [Condition__condition_occurrence.view.json](file:///Users/dmitryshirokov/Downloads/FHIR2OMOP/fhir2omop/mapspec/views/Condition__condition_occurrence.view.json):**
+1. **[MODIFY] [Condition__condition_occurrence.view.json](/mapspec/views/Condition__condition_occurrence.view.json):**
    * Extracted primary tumor references from the FHIR `Condition.extension` representing related conditions.
-2. **[NEW] [Condition__fact_relationship.sql](file:///Users/dmitryshirokov/Downloads/FHIR2OMOP/fhir2omop/mapspec/etl/Condition__fact_relationship.sql):**
+2. **[NEW] [Condition__fact_relationship.sql](/mapspec/etl/Condition__fact_relationship.sql):**
    * Created new Stage-2 ETL script to map bidirectional primary-metastatic links (`Primary of` and `Metastasis of`) into `fact_relationship`.
 
 

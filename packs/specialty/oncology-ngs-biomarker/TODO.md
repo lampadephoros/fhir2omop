@@ -15,19 +15,23 @@ Status snapshot and task checklist of the mappings, test cases, and unresolved g
  - [x] **Metastatic Site Linkage (Task 4 & 5)** — parsed related condition extensions and linked primary and metastatic condition occurrences in `fact_relationship`
  - [x] **Specimen Extraction Improvements (Task 6)** — supported tissue preservation methods (FFPE vs. Frozen) and mapped anatomical site structures for solid tumor biopsies
  - [x] **Structured Genomics & Cancer Staging Mappings (Task 3)** — mapped somatic variants (LOINC `48018-6`), quantitative biomarkers (TMB, MSI), and TNM Stage Group panel hierarchies to `observation`, `measurement`, and `fact_relationship` tables
+ - [x] **Expand Oncology Biomarkers** — added test fixtures and cases for common NSCLC mutations (KRAS p.G12C mutation and EML4-ALK gene fusion) under `observation--measurement--genomics-staging.json`
  
  ---
  
  ## Open Issues
  
  *(No open issues currently outstanding. All core mapping goals and specialty oncology enhancements have been implemented and validated.)*
- 
- ---
+
+## In Progress
+
+*(No tasks currently in progress.)*
+
+---
  
 ## Next (Future Roadmap)
 
 - [ ] **Targeted Therapy Mappings (Drug Exposure)** — Integrate the clinical case narrative with treatment records (e.g., mapping TKI prescriptions or immunotherapy administrations to `drug_exposure`).
-- [ ] **Expand Oncology Biomarkers** — Add test fixtures and cases for other common biomarkers like ALK gene fusions (e.g., EML4-ALK) or KRAS mutations.
  
  ---
  
