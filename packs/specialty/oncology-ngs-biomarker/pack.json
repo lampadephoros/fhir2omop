@@ -1,0 +1,18 @@
+{
+  "$schema": "../../schema/pack.schema.json",
+  "name": "oncology-ngs-biomarker",
+  "title": "Oncology NGS Biomarker Specialty Pack",
+  "description": "Standardized mappings for cancer genomics, NGS panels, and tumor biopsy specimen details.",
+  "cases": [
+    "condition--condition-occurrence--oncology-diagnosis.json",
+    "diagnosticreport--note--oncology-ngs.json",
+    "specimen--specimen--oncology-tumor-biopsy.json",
+    "observation--measurement--genomics-staging.json",
+    "medicationrequest--drug-exposure--targeted-therapy.json"
+  ],
+  "description_file": "samples.md",
+  "fhirVersion": "R4",
+  "omopCdmVersion": "5.4",
+  "omopExtension": "OHDSI Oncology WG Genomic Extension",
+  "omopExtensionVersion": "1.0"
+}

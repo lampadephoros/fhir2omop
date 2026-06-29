@@ -1,0 +1,137 @@
+{
+  "title": "Specimen · Oncology Tumor Biopsy",
+  "notes": "Tests mapping of oncology-related liquid and tissue biopsy specimen details to the specimen table.",
+  "fixtures": [
+    { "resourceType": "Patient", "id": "oncology-patient-1", "gender": "female", "birthDate": "1975-08-20" }
+  ],
+  "cases": [
+    {
+      "desc": "Liquid biopsy blood specimen collection (SNOMED 119297000) for genomic profiling → specimen row; concept 4001225 (Blood specimen)",
+      "fhir": [
+        {
+          "resourceType": "Specimen",
+          "id": "onc-spec-1",
+          "subject": { "reference": "Patient/oncology-patient-1" },
+          "type": {
+            "coding": [ { "system": "http://snomed.info/sct", "code": "119297000", "display": "Blood specimen" } ]
+          },
+          "collection": {
+            "collectedDateTime": "2020-11-04T08:30:00-05:00",
+            "quantity": { "value": 10, "unit": "mL" },
+            "bodySite": {
+              "coding": [ { "system": "http://snomed.info/sct", "code": "368208006", "display": "Left upper arm structure" } ]
+            }
+          }
+        }
+      ],
+      "omop": {
+        "specimen": [
+          {
+            "person_id": "ref:oncology-patient-1",
+            "specimen_concept_id": 4001225,
+            "specimen_concept_id__name": "Blood specimen",
+            "specimen_type_concept_id": 32856,
+            "specimen_type_concept_id__name": "Lab",
+            "specimen_date": "2020-11-04",
+            "specimen_datetime": "2020-11-04T08:30:00",
+            "quantity": 10,
+            "anatomic_site_concept_id": 4283159,
+            "anatomic_site_concept_id__name": "Left upper arm structure",
+            "specimen_source_value": "119297000",
+            "anatomic_site_source_value": "368208006"
+          }
+        ]
+      }
+    },
+    {
+      "desc": "Solid tissue biopsy of lung (primary tumor), FFPE preserved → specimen row; concept 4264660 (Formalin-fixed paraffin-embedded tissue specimen)",
+      "fhir": [
+        {
+          "resourceType": "Specimen",
+          "id": "onc-spec-2",
+          "subject": { "reference": "Patient/oncology-patient-1" },
+          "type": {
+            "coding": [ { "system": "http://snomed.info/sct", "code": "258435002", "display": "Tissue specimen" } ]
+          },
+          "collection": {
+            "collectedDateTime": "2020-11-04T08:30:00-05:00",
+            "quantity": { "value": 5, "unit": "mg" },
+            "bodySite": {
+              "coding": [ { "system": "http://snomed.info/sct", "code": "361362002", "display": "Structure of left upper lobe of lung" } ]
+            }
+          },
+          "processing": [
+            {
+              "procedure": {
+                "coding": [ { "system": "http://snomed.info/sct", "code": "434643000", "display": "Formalin fixed paraffin embedded sectioning" } ]
+              }
+            }
+          ]
+        }
+      ],
+      "omop": {
+        "specimen": [
+          {
+            "person_id": "ref:oncology-patient-1",
+            "specimen_concept_id": 4264660,
+            "specimen_concept_id__name": "Formalin-fixed paraffin-embedded tissue specimen",
+            "specimen_type_concept_id": 32856,
+            "specimen_type_concept_id__name": "Lab",
+            "specimen_date": "2020-11-04",
+            "specimen_datetime": "2020-11-04T08:30:00",
+            "quantity": 5,
+            "anatomic_site_concept_id": 4031641,
+            "anatomic_site_concept_id__name": "Structure of left upper lobe of lung",
+            "specimen_source_value": "258435002",
+            "anatomic_site_source_value": "361362002"
+          }
+        ]
+      }
+    },
+    {
+      "desc": "Solid tissue biopsy of lung, Frozen preserved → specimen row; concept 4264661 (Frozen tissue specimen)",
+      "fhir": [
+        {
+          "resourceType": "Specimen",
+          "id": "onc-spec-3",
+          "subject": { "reference": "Patient/oncology-patient-1" },
+          "type": {
+            "coding": [ { "system": "http://snomed.info/sct", "code": "258435002", "display": "Tissue specimen" } ]
+          },
+          "collection": {
+            "collectedDateTime": "2020-11-04T09:00:00-05:00",
+            "quantity": { "value": 3, "unit": "mg" },
+            "bodySite": {
+              "coding": [ { "system": "http://snomed.info/sct", "code": "361362002", "display": "Structure of left upper lobe of lung" } ]
+            }
+          },
+          "processing": [
+            {
+              "procedure": {
+                "coding": [ { "system": "http://snomed.info/sct", "code": "429215003", "display": "Freezing" } ]
+              }
+            }
+          ]
+        }
+      ],
+      "omop": {
+        "specimen": [
+          {
+            "person_id": "ref:oncology-patient-1",
+            "specimen_concept_id": 4264661,
+            "specimen_concept_id__name": "Frozen tissue specimen",
+            "specimen_type_concept_id": 32856,
+            "specimen_type_concept_id__name": "Lab",
+            "specimen_date": "2020-11-04",
+            "specimen_datetime": "2020-11-04T09:00:00",
+            "quantity": 3,
+            "anatomic_site_concept_id": 4031641,
+            "anatomic_site_concept_id__name": "Structure of left upper lobe of lung",
+            "specimen_source_value": "258435002",
+            "anatomic_site_source_value": "361362002"
+          }
+        ]
+      }
+    }
+  ]
+}

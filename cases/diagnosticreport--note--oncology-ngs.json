@@ -1,0 +1,55 @@
+{
+  "title": "DiagnosticReport · Oncology NGS Report",
+  "notes": "Tests mapping of oncology genomics / NGS reports to the note table and target schemas.",
+  "fixtures": [
+    {
+      "resourceType": "Patient",
+      "id": "oncology-patient-1",
+      "gender": "female",
+      "birthDate": "1975-08-20"
+    }
+  ],
+  "cases": [
+    {
+      "desc": "Genomic NGS Report (presentedForm.data UTF-8 base64) → note row with base64-decoded text, type 32817, class 3000225 (Laboratory report)",
+      "fhir": [
+        {
+          "resourceType": "DiagnosticReport",
+          "id": "onc-dr-1",
+          "status": "final",
+          "code": {
+            "text": "Oncology NGS Panel",
+            "coding": [
+              {
+                "system": "http://loinc.org",
+                "code": "11502-2",
+                "display": "Laboratory report"
+              }
+            ]
+          },
+          "subject": {
+            "reference": "Patient/oncology-patient-1"
+          },
+          "effectiveDateTime": "2020-11-05T09:00:00-05:00",
+          "conclusion": "Positive for somatic variants: EGFR p.L858R mutation detected."
+        }
+      ],
+      "omop": {
+        "note": [
+          {
+            "person_id": "ref:oncology-patient-1",
+            "note_type_concept_id": 32817,
+            "note_class_concept_id": 0,
+            "note_title": "Oncology NGS Panel",
+            "note_text": "Positive for somatic variants: EGFR p.L858R mutation detected.",
+            "encoding_concept_id": 32678,
+            "language_concept_id": 4180186,
+            "note_date": "2020-11-05",
+            "note_datetime": "2020-11-05T09:00:00",
+            "note_source_value": "11502-2"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -13,10 +13,14 @@
   ],
   "resource": "Condition",
   "description": "Stage 1 of FHIR→OMOP. One staging row per `Condition.code.coding[]` (and `Condition.evidence.concept.coding[]`) entry instead of one row per Condition. Stage 2 resolves each coding through cm.fhir_system_to_omop_vocab + Maps-to, dedups when two codings of the same Condition resolve to the same standard concept_id, and routes by std.domain_id to the appropriate OMOP table (condition_occurrence / observation / procedure_occurrence / measurement).\n\nDiff page caveat: the reference Synthea CSV loader picks one coding per condition (the cdm.* oracle), so cdm.* and cdm_ours_fhir.* will no longer line up by source_value. Diff is still meaningful on (person_id, std concept_id, start_date) — see GAPS.md.",
+  "constant": [
+    { "name": "conditionRelated", "valueString": "http://hl7.org/fhir/StructureDefinition/condition-related" }
+  ],
   "select": [
     {
       "column": [
         { "name": "id",                       "path": "id",                                        "type": "id" },
+        { "name": "primary_condition_ref",     "path": "extension(%conditionRelated).valueReference.first().getReferenceKey()", "type": "string" },
         { "name": "subject_ref",              "path": "subject.getReferenceKey()",                  "type": "string" },
         { "name": "encounter_ref",            "path": "encounter.getReferenceKey()",                "type": "string" },
         { "name": "recorder_ref",             "path": "recorder.getReferenceKey()",                 "type": "string", "description": "→ provider_id when asserter is absent (Patient/person review §4.8)." },

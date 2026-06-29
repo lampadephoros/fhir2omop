@@ -23,6 +23,7 @@
         { "name": "subject_ref",     "path": "subject.getReferenceKey()",                                       "type": "string" },
         { "name": "type_snomed",     "path": "type.coding.where(system=%snomedSystem).code.first()",            "type": "code" },
         { "name": "body_site_snomed","path": "collection.bodySite.coding.where(system=%snomedSystem).code.first()", "type": "code" },
+        { "name": "processing_procedure_snomed", "path": "processing.procedure.coding.where(system=%snomedSystem).code.first()", "type": "code" },
         { "name": "collected_dt",    "path": "collection.collected.ofType(dateTime)",                           "type": "dateTime" },
         { "name": "quantity_value",  "path": "collection.quantity.value",                                       "type": "decimal" }
       ]

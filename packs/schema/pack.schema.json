@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pack.schema.json",
+  "title": "Specialty Domain Pack",
+  "description": "Metadata definition for a clinical or product specialty mapping pack",
+  "type": "object",
+  "required": ["name", "title", "description", "cases"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+$",
+      "description": "Kebab-case machine identifier for the pack (e.g. oncology-ngs-biomarker)"
+    },
+    "title": {
+      "type": "string",
+      "description": "Human-readable title of the specialty pack"
+    },
+    "description": {
+      "type": "string",
+      "description": "Short description of what mapping cases and scope this pack covers"
+    },
+    "cases": {
+      "type": "array",
+      "description": "List of case JSON file names associated with this pack (e.g. condition--condition-occurrence--oncology-diagnosis.json)",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9-]+--[a-z0-9-]+--[a-z0-9-]+\\.json$"
+      }
+    },
+    "description_file": {
+      "type": "string",
+      "description": "Path to the markdown file detailing clinical samples/narrative, relative to the pack folder"
+    },
+    "fhirVersion": {
+      "type": "string",
+      "description": "The FHIR specification version this pack is designed for (e.g., R4, 4.0.1)"
+    },
+    "omopCdmVersion": {
+      "type": "string",
+      "description": "The OMOP CDM version this pack targets (e.g., 5.4)"
+    },
+    "omopExtension": {
+      "type": "string",
+      "description": "The name of the OMOP CDM extension used, if applicable (e.g., Oncology WG Genomic Extension)"
+    },
+    "omopExtensionVersion": {
+      "type": "string",
+      "description": "The version of the OMOP CDM extension used, if applicable"
+    }
+  },
+  "additionalProperties": false
+}

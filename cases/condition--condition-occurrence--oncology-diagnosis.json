@@ -1,0 +1,213 @@
+{
+  "title": "Condition · Oncology Diagnosis",
+  "notes": "Tests mapping of cancer diagnoses (e.g., lung cancer primary tumor site) to condition_occurrence.",
+  "fixtures": [
+    {
+      "resourceType": "Patient",
+      "id": "oncology-patient-1",
+      "gender": "female",
+      "birthDate": "1975-08-20"
+    }
+  ],
+  "cases": [
+    {
+      "desc": "Adenocarcinoma of lung (SNOMED 254632001) → condition_occurrence row; concept 4115276 (Adenocarcinoma of lung)",
+      "fhir": [
+        {
+          "resourceType": "Condition",
+          "id": "onc-cond-1",
+          "clinicalStatus": {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
+                "code": "active"
+              }
+            ]
+          },
+          "verificationStatus": {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/condition-ver-status",
+                "code": "confirmed"
+              }
+            ]
+          },
+          "code": {
+            "text": "Adenocarcinoma of lung (disorder)",
+            "coding": [
+              {
+                "system": "http://snomed.info/sct",
+                "code": "254632001",
+                "display": "Adenocarcinoma of lung"
+              }
+            ]
+          },
+          "subject": {
+            "reference": "Patient/oncology-patient-1"
+          },
+          "onsetDateTime": "2020-10-15T10:00:00-04:00"
+        }
+      ],
+      "omop": {
+        "condition_occurrence": [
+          {
+            "person_id": "ref:oncology-patient-1",
+            "condition_concept_id": 4115276,
+            "condition_concept_id__name": "Adenocarcinoma of lung",
+            "condition_start_date": "2020-10-15",
+            "condition_start_datetime": "2020-10-15T10:00:00",
+            "condition_type_concept_id": 32817,
+            "condition_type_concept_id__name": "EHR Medication Record",
+            "condition_status_concept_id": 32893,
+            "condition_status_concept_id__name": "Confirmed diagnosis",
+            "condition_source_value": "Adenocarcinoma of lung",
+            "condition_source_concept_id": 4115276,
+            "condition_source_concept_id__name": "Adenocarcinoma of lung",
+            "condition_status_source_value": "active"
+          }
+        ]
+      }
+    },
+    {
+      "desc": "Adenocarcinoma of lung + Metastatic brain tumor linked via condition-related extension",
+      "fhir": [
+        {
+          "resourceType": "Patient",
+          "id": "oncology-patient-2",
+          "gender": "female",
+          "birthDate": "1975-08-20"
+        },
+        {
+          "resourceType": "Condition",
+          "id": "onc-cond-2",
+          "clinicalStatus": {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
+                "code": "active"
+              }
+            ]
+          },
+          "verificationStatus": {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/condition-ver-status",
+                "code": "confirmed"
+              }
+            ]
+          },
+          "code": {
+            "text": "Adenocarcinoma of lung (disorder)",
+            "coding": [
+              {
+                "system": "http://snomed.info/sct",
+                "code": "254632001",
+                "display": "Adenocarcinoma of lung"
+              }
+            ]
+          },
+          "subject": {
+            "reference": "Patient/oncology-patient-2"
+          },
+          "onsetDateTime": "2020-10-15T10:00:00-04:00"
+        },
+        {
+          "resourceType": "Condition",
+          "id": "onc-cond-3",
+          "clinicalStatus": {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
+                "code": "active"
+              }
+            ]
+          },
+          "verificationStatus": {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/condition-ver-status",
+                "code": "confirmed"
+              }
+            ]
+          },
+          "code": {
+            "text": "Secondary malignant neoplasm of brain",
+            "coding": [
+              {
+                "system": "http://snomed.info/sct",
+                "code": "94225005",
+                "display": "Secondary malignant neoplasm of brain"
+              }
+            ]
+          },
+          "subject": {
+            "reference": "Patient/oncology-patient-2"
+          },
+          "onsetDateTime": "2021-03-12T11:30:00-04:00",
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/condition-related",
+              "valueReference": {
+                "reference": "Condition/onc-cond-2"
+              }
+            }
+          ]
+        }
+      ],
+      "omop": {
+        "condition_occurrence": [
+          {
+            "condition_occurrence_id": "id:primary_id",
+            "person_id": "ref:oncology-patient-2",
+            "condition_concept_id": 4115276,
+            "condition_concept_id__name": "Adenocarcinoma of lung",
+            "condition_start_date": "2020-10-15",
+            "condition_start_datetime": "2020-10-15T10:00:00",
+            "condition_type_concept_id": 32817,
+            "condition_type_concept_id__name": "EHR Medication Record",
+            "condition_status_concept_id": 32893,
+            "condition_status_concept_id__name": "Confirmed diagnosis",
+            "condition_source_value": "Adenocarcinoma of lung",
+            "condition_source_concept_id": 4115276,
+            "condition_source_concept_id__name": "Adenocarcinoma of lung",
+            "condition_status_source_value": "active"
+          },
+          {
+            "condition_occurrence_id": "id:metastasis_id",
+            "person_id": "ref:oncology-patient-2",
+            "condition_concept_id": 436659,
+            "condition_concept_id__name": "Secondary malignant neoplasm of brain",
+            "condition_start_date": "2021-03-12",
+            "condition_start_datetime": "2021-03-12T11:30:00",
+            "condition_type_concept_id": 32817,
+            "condition_type_concept_id__name": "EHR Medication Record",
+            "condition_status_concept_id": 32893,
+            "condition_status_concept_id__name": "Confirmed diagnosis",
+            "condition_source_value": "Secondary malignant neoplasm of brain",
+            "condition_source_concept_id": 436659,
+            "condition_source_concept_id__name": "Secondary malignant neoplasm of brain",
+            "condition_status_source_value": "active"
+          }
+        ],
+        "fact_relationship": [
+          {
+            "domain_concept_id_1": 19,
+            "fact_id_1": "id:primary_id",
+            "domain_concept_id_2": 19,
+            "fact_id_2": "id:metastasis_id",
+            "relationship_concept_id": 44818854,
+            "relationship_concept_id__name": "Primary of"
+          },
+          {
+            "domain_concept_id_1": 19,
+            "fact_id_1": "id:metastasis_id",
+            "domain_concept_id_2": 19,
+            "fact_id_2": "id:primary_id",
+            "relationship_concept_id": 44818765,
+            "relationship_concept_id__name": "Metastasis of"
+          }
+        ]
+      }
+    }
+  ]
+}

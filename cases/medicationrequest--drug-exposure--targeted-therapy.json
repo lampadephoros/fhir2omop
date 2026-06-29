@@ -1,0 +1,176 @@
+{
+  "title": "MedicationRequest → drug_exposure (Targeted Therapy)",
+  "notes": "Tests mapping of targeted therapies (EGFR TKIs like Osimertinib, and immunotherapies like Pembrolizumab) to the drug_exposure table.",
+  "cases": [
+    {
+      "desc": "MedicationRequest active, Osimertinib 80 MG Oral Tablet (RxNorm 1716277) -> drug_exposure, type 38000177",
+      "fhir": [
+        {
+          "resourceType": "Patient",
+          "id": "oncology-patient-1",
+          "gender": "female",
+          "birthDate": "1975-08-20"
+        },
+        {
+          "resourceType": "Practitioner",
+          "id": "oncology-prac-1",
+          "name": [
+            {
+              "family": "Smith",
+              "given": [
+                "John"
+              ]
+            }
+          ]
+        },
+        {
+          "resourceType": "Encounter",
+          "id": "oncology-enc-1",
+          "status": "finished",
+          "class": {
+            "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+            "code": "AMB"
+          },
+          "subject": {
+            "reference": "Patient/oncology-patient-1"
+          },
+          "period": {
+            "start": "2020-11-04T08:00:00-05:00",
+            "end": "2020-11-04T09:00:00-05:00"
+          }
+        },
+        {
+          "resourceType": "MedicationRequest",
+          "id": "onc-medreq-osimertinib",
+          "status": "active",
+          "intent": "order",
+          "subject": {
+            "reference": "Patient/oncology-patient-1"
+          },
+          "encounter": {
+            "reference": "Encounter/oncology-enc-1"
+          },
+          "requester": {
+            "reference": "Practitioner/oncology-prac-1"
+          },
+          "authoredOn": "2020-11-04T08:30:00-05:00",
+          "medicationCodeableConcept": {
+            "text": "Osimertinib 80 MG Oral Tablet",
+            "coding": [
+              {
+                "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+                "code": "1716277",
+                "display": "Osimertinib 80 MG Oral Tablet"
+              }
+            ]
+          }
+        }
+      ],
+      "omop": {
+        "drug_exposure": [
+          {
+            "person_id": "ref:oncology-patient-1",
+            "drug_concept_id": 35200373,
+            "drug_concept_id__name": "Osimertinib 80 MG Oral Tablet",
+            "drug_exposure_start_date": "2020-11-04",
+            "drug_exposure_start_datetime": "2020-11-04T08:30:00",
+            "drug_exposure_end_date": "2020-11-04",
+            "drug_exposure_end_datetime": "2020-11-04T08:30:00",
+            "drug_type_concept_id": 38000177,
+            "drug_type_concept_id__name": "Prescription written",
+            "provider_id": "ref:oncology-prac-1",
+            "visit_occurrence_id": "ref:oncology-enc-1",
+            "drug_source_value": "1716277",
+            "drug_source_concept_id": 35200373,
+            "drug_source_concept_id__name": "Osimertinib 80 MG Oral Tablet"
+          }
+        ]
+      }
+    },
+    {
+      "desc": "MedicationRequest active, Pembrolizumab 25 MG/ML Injectable Solution (RxNorm 1547548) -> drug_exposure, type 38000177",
+      "fhir": [
+        {
+          "resourceType": "Patient",
+          "id": "oncology-patient-1",
+          "gender": "female",
+          "birthDate": "1975-08-20"
+        },
+        {
+          "resourceType": "Practitioner",
+          "id": "oncology-prac-1",
+          "name": [
+            {
+              "family": "Smith",
+              "given": [
+                "John"
+              ]
+            }
+          ]
+        },
+        {
+          "resourceType": "Encounter",
+          "id": "oncology-enc-1",
+          "status": "finished",
+          "class": {
+            "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+            "code": "AMB"
+          },
+          "subject": {
+            "reference": "Patient/oncology-patient-1"
+          },
+          "period": {
+            "start": "2020-11-04T08:00:00-05:00",
+            "end": "2020-11-04T09:00:00-05:00"
+          }
+        },
+        {
+          "resourceType": "MedicationRequest",
+          "id": "onc-medreq-pembrolizumab",
+          "status": "active",
+          "intent": "order",
+          "subject": {
+            "reference": "Patient/oncology-patient-1"
+          },
+          "encounter": {
+            "reference": "Encounter/oncology-enc-1"
+          },
+          "requester": {
+            "reference": "Practitioner/oncology-prac-1"
+          },
+          "authoredOn": "2020-11-04T08:30:00-05:00",
+          "medicationCodeableConcept": {
+            "text": "Pembrolizumab 25 MG/ML Injectable Solution",
+            "coding": [
+              {
+                "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+                "code": "1547548",
+                "display": "Pembrolizumab 25 MG/ML Injectable Solution"
+              }
+            ]
+          }
+        }
+      ],
+      "omop": {
+        "drug_exposure": [
+          {
+            "person_id": "ref:oncology-patient-1",
+            "drug_concept_id": 35200140,
+            "drug_concept_id__name": "Pembrolizumab 25 MG/ML Injectable Solution",
+            "drug_exposure_start_date": "2020-11-04",
+            "drug_exposure_start_datetime": "2020-11-04T08:30:00",
+            "drug_exposure_end_date": "2020-11-04",
+            "drug_exposure_end_datetime": "2020-11-04T08:30:00",
+            "drug_type_concept_id": 38000177,
+            "drug_type_concept_id__name": "Prescription written",
+            "provider_id": "ref:oncology-prac-1",
+            "visit_occurrence_id": "ref:oncology-enc-1",
+            "drug_source_value": "1547548",
+            "drug_source_concept_id": 35200140,
+            "drug_source_concept_id__name": "Pembrolizumab 25 MG/ML Injectable Solution"
+          }
+        ]
+      }
+    }
+  ]
+}
