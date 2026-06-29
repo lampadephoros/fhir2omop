@@ -55,4 +55,13 @@ INSERT INTO vocab.concept_relationship VALUES ('4163863', '4163863', 'Maps to', 
 INSERT INTO vocab.concept_relationship VALUES ('4163867', '4163867', 'Maps to', '1970-01-01', '2099-12-31', NULL) ON CONFLICT DO NOTHING;
 INSERT INTO vocab.concept_relationship VALUES ('4163870', '4163870', 'Maps to', '1970-01-01', '2099-12-31', NULL) ON CONFLICT DO NOTHING;
 
+-- Targeted Therapies & Immunotherapy (RxNorm)
+INSERT INTO vocab.concept VALUES ('35200373', 'Osimertinib 80 MG Oral Tablet', 'Drug', 'RxNorm', 'Clinical Drug', 'S', '1716277', '1970-01-01', '2099-12-31', NULL) ON CONFLICT DO NOTHING;
+INSERT INTO vocab.concept VALUES ('35200140', 'Pembrolizumab 25 MG/ML Injectable Solution', 'Drug', 'RxNorm', 'Clinical Drug', 'S', '1547548', '1970-01-01', '2099-12-31', NULL) ON CONFLICT DO NOTHING;
+
+-- Maps-to relationships for Drugs
+INSERT INTO vocab.concept_relationship VALUES ('35200373', '35200373', 'Maps to', '1970-01-01', '2099-12-31', NULL) ON CONFLICT DO NOTHING;
+INSERT INTO vocab.concept_relationship VALUES ('35200140', '35200140', 'Maps to', '1970-01-01', '2099-12-31', NULL) ON CONFLICT DO NOTHING;
+
+
 

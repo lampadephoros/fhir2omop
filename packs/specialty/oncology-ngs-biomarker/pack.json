@@ -7,7 +7,8 @@
     "condition--condition-occurrence--oncology-diagnosis.json",
     "diagnosticreport--note--oncology-ngs.json",
     "specimen--specimen--oncology-tumor-biopsy.json",
-    "observation--measurement--genomics-staging.json"
+    "observation--measurement--genomics-staging.json",
+    "medicationrequest--drug-exposure--targeted-therapy.json"
   ],
   "description_file": "samples.md",
   "fhirVersion": "R4",

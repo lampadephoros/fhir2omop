@@ -339,6 +339,51 @@ graph LR
   1. **Stage-1 (Extraction):** The JSON view [`DiagnosticReport__note.view.json`](/mapspec/views/DiagnosticReport__note.view.json) extracts the report's conclusion summary, LOINC code, and release timestamp from the FHIR `DiagnosticReport` resource.
   2. **Stage-2 (Narrative Loading):** The SQL script [`DiagnosticReport__note.sql`](/mapspec/etl/DiagnosticReport__note.sql) formats the report text, resolves the note classification concepts, and inserts the full text record into `note`.
 
+---
+
+### 6. MedicationRequest Mapping (Targeted Therapies)
+
+```mermaid
+graph LR
+    subgraph FHIR ["FHIR MedicationRequest"]
+        M_id["id"]
+        M_status["status"]
+        M_patient["subject"]
+        M_encounter["encounter"]
+        M_provider["requester"]
+        M_med["medicationCodeableConcept (RxNorm)"]
+        M_auth["authoredOn"]
+    end
+    subgraph OMOP ["OMOP drug_exposure"]
+        O_id["drug_exposure_id"]
+        O_person["person_id"]
+        O_drug["drug_concept_id"]
+        O_start["drug_exposure_start_date / datetime"]
+        O_end["drug_exposure_end_date / datetime"]
+        O_type["drug_type_concept_id (Prescription written)"]
+        O_prov["provider_id"]
+        O_visit["visit_occurrence_id"]
+        O_src["drug_source_value"]
+        O_src_c["drug_source_concept_id"]
+    end
+    M_id --> O_id
+    M_patient --> O_person
+    M_med --> O_drug
+    M_med --> O_src
+    M_med --> O_src_c
+    M_auth --> O_start
+    M_auth --> O_end
+    M_provider --> O_prov
+    M_encounter --> O_visit
+```
+
+**Business Logic & Process Flow:**
+* **Logic:** When a patient is prescribed targeted therapies (such as TKIs or immunotherapies), we must capture their prescription records (MedicationRequests) as standard OMOP drug exposures. Standardizing medication codes to RxNorm standard concepts is critical to run clinical drug research and evaluate drug outcomes.
+* **Process Flow & Scripts:**
+  1. **Stage-1 (Extraction):** The JSON view [`MedicationRequest__drug_exposure.view.json`](/mapspec/views/MedicationRequest__drug_exposure.view.json) parses the FHIR `MedicationRequest` resource to extract the RxNorm medication code, patient/provider references, status, and authorship timestamps.
+  2. **Stage-2 (Drug Mapping & Loading):** The SQL script [`MedicationRequest__drug_exposure.sql`](/mapspec/etl/MedicationRequest__drug_exposure.sql) maps raw RxNorm codes to standard OMOP Drug concepts (routing to `drug_concept_id` and `drug_source_concept_id` accordingly), sets the start/end timestamps from the authored date, and writes the prescription events (hardcoding type concept `38000177` for "Prescription written") into the standard `drug_exposure` table.
+
+
 
 
 

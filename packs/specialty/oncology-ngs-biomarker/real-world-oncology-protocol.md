@@ -28,6 +28,8 @@ gantt
     Structured Genomics & TNM Staging :active, obs, 2020-11-04, 2020-11-04
     section Genomics
     NGS Genomics Report Released      :active, dr, 2020-11-05, 2020-11-05
+    section Treatment
+    Targeted Therapy Initiation       :active, rx, 2020-11-10, 2020-11-10
     section Monitoring
     Brain Metastasis Diagnosis        :active, cond2, 2021-03-12, 2021-03-12
 ```
@@ -70,7 +72,17 @@ The extracted cfDNA from the liquid biopsy (or DNA/RNA from the frozen solid tis
 * **Panel-Member Association:** TNM staging categories must be linked directly to their parent Stage Group observation to preserve mCODE structural hierarchies.
 * **Data Integration:** Capture raw unstructured reports (notes) alongside discrete, structured measurements (TMB, MSI) and staging observations to ensure semantic utility for downstream analytics.
 
-### Stage 4: Longitudinal Monitoring & Metastasis Tracking
+### Stage 4: Treatment & Targeted Therapy Initiation
+**Clinical Procedure:**
+Based on the genomic profiling results showing an EGFR p.L858R mutation and high TMB/MSI status, the clinical team prescribes targeted systemic therapies:
+1. **Targeted TKI Therapy:** The patient is prescribed **Osimertinib 80 MG Oral Tablet** (RxNorm `1716277`), an EGFR tyrosine kinase inhibitor.
+2. **Immunotherapy Protocol:** In cases where checkpoint inhibition is indicated by biomarker levels (such as MSI-High or high TMB), the patient receives **Pembrolizumab 25 MG/ML Injectable Solution** (RxNorm `1547548`).
+
+**Best Practices:**
+* **Standardized RxNorm Coding:** Ensure all medication prescriptions and administrations are coded using RxNorm identifiers to enable standardized drug classification and safety analysis.
+* **Biomarker-Directed Selection:** Link treatment selection directly to the patient's NGS panel results (e.g., prescribing EGFR inhibitors only after confirming EGFR-sensitizing mutations).
+
+### Stage 5: Longitudinal Monitoring & Metastasis Tracking
 **Clinical Procedure:**
 The patient is monitored longitudinally. Five months post-diagnosis, surveillance imaging reveals a secondary metastatic lesion in the brain (SNOMED-CT `94225005`).
 
