@@ -395,9 +395,9 @@ CREATE TABLE cdm_ours_fhir.episode_event (
 
 CREATE TABLE cdm_ours_fhir.fact_relationship (
     domain_concept_id_1 integer NOT NULL,
-    fact_id_1 integer NOT NULL,
+    fact_id_1 bigint NOT NULL,
     domain_concept_id_2 integer NOT NULL,
-    fact_id_2 integer NOT NULL,
+    fact_id_2 bigint NOT NULL,
     relationship_concept_id integer NOT NULL
 );
 

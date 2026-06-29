@@ -24,7 +24,9 @@ const SUF = process.env.RC_SUFFIX ?? String(process.pid);
 const T = { fhir: `t_fhir_${SUF}`, staging: `t_staging_${SUF}`, cdm: `t_cdm_${SUF}` };
 const args = process.argv.slice(2);
 const verbose = args.includes("-v");
-const filter = args.find((a) => !a.startsWith("-"));
+const positional = args.filter((a) => !a.startsWith("-") && a !== "seed");
+const firstParam = positional[0];
+const loadSeed = args.includes("seed");
 
 const PK_BY_TABLE: Record<string, string> = {
     person: "person_id", location: "location_id", care_site: "care_site_id", provider: "provider_id",
@@ -328,7 +330,50 @@ TRUNCATE vocab.concept, vocab.concept_relationship;
 
 // ── main ───────────────────────────────────────────────────────────────────
 const seedSet = new Set<string>();
-const files = readdirSync("cases").filter((f) => f.endsWith(".json") && (!filter || f.includes(filter))).sort();
+
+// Load any pack-specific vocabulary seeds if seed parameter is specified
+if (loadSeed) {
+    try {
+        for (const d of readdirSync("packs/specialty", { withFileTypes: true })) {
+            if (!d.isDirectory()) continue;
+            const seedFile = Bun.file(`packs/specialty/${d.name}/_vocab_seed.sql`);
+            if (await seedFile.exists()) {
+                await runScript(subSchemas(await seedFile.text()));
+            }
+        }
+    } catch (e: any) {
+        console.error(`Warning: failed to load pack-specific vocabulary seeds: ${e.message}`);
+    }
+}
+
+let packName: string | undefined;
+let caseFilter: string | undefined;
+let packCases: Set<string> | undefined;
+
+if (firstParam) {
+    const packJsonPath = `packs/specialty/${firstParam}/pack.json`;
+    if (await Bun.file(packJsonPath).exists()) {
+        packName = firstParam;
+        try {
+            const packContent = JSON.parse(await Bun.file(packJsonPath).text());
+            packCases = new Set(packContent.cases);
+        } catch (e: any) {
+            console.error(`Error loading pack '${packName}': ${e.message}`);
+            process.exit(1);
+        }
+    } else {
+        caseFilter = firstParam;
+    }
+}
+
+const files = readdirSync("cases")
+    .filter((f) => {
+        if (!f.endsWith(".json") || f.startsWith("_")) return false;
+        if (packCases) return packCases.has(f);
+        return !caseFilter || f.includes(caseFilter);
+    })
+    .sort();
+
 let pass = 0, fail = 0;
 const failedCases: string[] = [];
 const results: Record<string, { variants: { desc: string; pass: boolean; failures: string[] }[] }> = {};
@@ -408,7 +453,7 @@ for (const f of files) {
             for (let j = 0; j < actual.length; j++) {
                 if (used[j]) continue;
                 const row = actual[j];
-                const idVals = Object.entries(row).filter(([k]) => k.endsWith("_id")).map(([, v]) => v).filter((v) => v != null).map(String);
+                const idVals = Object.entries(row).filter(([k]) => k.endsWith("_id") || k.startsWith("fact_id_")).map(([, v]) => v).filter((v) => v != null).map(String);
                 const owner = meta.find((m) => idVals.some((v) => owners[m.i]!.has(v)));
                 const msg = `${t}: unexpected row (concept ${row[`${t}_concept_id`] ?? "?"})`;
                 if (owner) vFail[owner.i]!.push(msg); else vFail[0]!.push(`${t}: unexpected row not attributable to a variant`);

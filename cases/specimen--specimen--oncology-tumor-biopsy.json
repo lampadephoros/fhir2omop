@@ -1,0 +1,47 @@
+{
+  "title": "Specimen · Oncology Tumor Biopsy",
+  "notes": "Tests mapping of oncology-related liquid and tissue biopsy specimen details to the specimen table.",
+  "fixtures": [
+    { "resourceType": "Patient", "id": "oncology-patient-1", "gender": "female", "birthDate": "1975-08-20" }
+  ],
+  "cases": [
+    {
+      "desc": "Liquid biopsy blood specimen collection (SNOMED 119297000) for genomic profiling → specimen row; concept 4001225 (Blood specimen)",
+      "fhir": [
+        {
+          "resourceType": "Specimen",
+          "id": "onc-spec-1",
+          "subject": { "reference": "Patient/oncology-patient-1" },
+          "type": {
+            "coding": [ { "system": "http://snomed.info/sct", "code": "119297000", "display": "Blood specimen" } ]
+          },
+          "collection": {
+            "collectedDateTime": "2020-11-04T08:30:00-05:00",
+            "quantity": { "value": 10, "unit": "mL" },
+            "bodySite": {
+              "coding": [ { "system": "http://snomed.info/sct", "code": "368208006", "display": "Left upper arm structure" } ]
+            }
+          }
+        }
+      ],
+      "omop": {
+        "specimen": [
+          {
+            "person_id": "ref:oncology-patient-1",
+            "specimen_concept_id": 4001225,
+            "specimen_concept_id__name": "Blood specimen",
+            "specimen_type_concept_id": 32856,
+            "specimen_type_concept_id__name": "Lab",
+            "specimen_date": "2020-11-04",
+            "specimen_datetime": "2020-11-04T08:30:00",
+            "quantity": 10,
+            "anatomic_site_concept_id": 4283159,
+            "anatomic_site_concept_id__name": "Left upper arm structure",
+            "specimen_source_value": "119297000",
+            "anatomic_site_source_value": "368208006"
+          }
+        ]
+      }
+    }
+  ]
+}

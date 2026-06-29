@@ -22,6 +22,7 @@ export const PLAN: Edge[] = [
 
     // — clinical events —
     { edge: "Condition__condition_occurrence",        src: "fhir.condition",             staging: "staging.condition_occurrence",                 target: "cdm_ours_fhir.condition_occurrence", mode: "truncate" },
+    { edge: "Condition__fact_relationship",           src: "fhir.condition",             staging: "staging.condition_occurrence",                 target: "cdm_ours_fhir.fact_relationship",    mode: "truncate" },
     { edge: "Procedure__procedure_occurrence",        src: "fhir.procedure",             staging: "staging.procedure_occurrence",                 target: "cdm_ours_fhir.procedure_occurrence", mode: "truncate" },
     { edge: "DiagnosticReport__procedure_occurrence", src: "fhir.diagnostic_report",     staging: "staging.diagnosticreport_coded",               target: "cdm_ours_fhir.procedure_occurrence", mode: "append" },
     { edge: "Condition__procedure_occurrence",        src: "fhir.condition",             staging: "staging.condition_occurrence",                 target: "cdm_ours_fhir.procedure_occurrence", mode: "append" },

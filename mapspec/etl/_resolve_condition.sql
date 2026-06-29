@@ -17,6 +17,7 @@ SELECT DISTINCT ON (v.id, std.concept_id)
     v.id,
     v.subject_ref, v.encounter_ref, v.recorder_ref, v.asserter_ref,
     v.clinical_status_code, v.verification_status_code, v.category_code,
+    v.primary_condition_ref,
     v.onset_dt, v.onset_period_start, v.recorded_date,
     v.abatement_dt, v.abatement_period_end, v.abatement_string,
     v.code_text,
