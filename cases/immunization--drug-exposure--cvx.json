@@ -233,6 +233,116 @@
           }
         ]
       }
+    },
+    {
+      "desc": "(g) Immunization with SNOMED route 78421000 (Intramuscular route) → route_concept_id 4302612 via cm.route_to_omop SNOMED group; route_source_value preserves the raw code",
+      "fhir": [
+        { "resourceType": "Patient", "id": "patient-5", "gender": "female", "birthDate": "2010-01-01" },
+        { "resourceType": "Encounter", "id": "enc-4", "status": "finished", "class": { "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode", "code": "AMB" }, "subject": { "reference": "Patient/patient-5" } },
+        {
+          "resourceType": "Immunization",
+          "id": "imm-5",
+          "status": "completed",
+          "primarySource": true,
+          "patient": { "reference": "Patient/patient-5" },
+          "encounter": { "reference": "Encounter/enc-4" },
+          "vaccineCode": { "text": "hepatitis B surface antigen vaccine", "coding": [ { "system": "http://www.nlm.nih.gov/research/umls/rxnorm", "code": "797752", "display": "hepatitis B surface antigen vaccine" } ] },
+          "route": { "coding": [ { "system": "http://snomed.info/sct", "code": "78421000", "display": "Intramuscular route" } ] },
+          "occurrenceDateTime": "2017-12-05T10:40:30+00:00"
+        }
+      ],
+      "omop": {
+        "drug_exposure": [
+          {
+            "person_id": "ref:patient-5",
+            "drug_concept_id": 528323,
+            "drug_exposure_start_date": "2017-12-05",
+            "drug_exposure_start_datetime": "2017-12-05T10:40:30",
+            "drug_exposure_end_date": "2017-12-05",
+            "drug_exposure_end_datetime": "2017-12-05T10:40:30",
+            "drug_type_concept_id": 32827,
+            "visit_occurrence_id": "ref:enc-4",
+            "drug_source_value": "797752",
+            "drug_source_concept_id": 528323,
+            "route_concept_id": 4302612,
+            "route_concept_id__name": "Intramuscular",
+            "route_source_value": "78421000"
+          }
+        ]
+      }
+    },
+    {
+      "desc": "(h) Immunization with HL7 v3 RouteOfAdministration route 'IM' → route_concept_id 4302612 via cm.route_to_omop v3 group (same OMOP concept as SNOMED 78421000); proves both groups resolve",
+      "fhir": [
+        { "resourceType": "Patient", "id": "patient-6", "gender": "male", "birthDate": "2010-01-01" },
+        { "resourceType": "Encounter", "id": "enc-5", "status": "finished", "class": { "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode", "code": "AMB" }, "subject": { "reference": "Patient/patient-6" } },
+        {
+          "resourceType": "Immunization",
+          "id": "imm-6",
+          "status": "completed",
+          "primarySource": true,
+          "patient": { "reference": "Patient/patient-6" },
+          "encounter": { "reference": "Encounter/enc-5" },
+          "vaccineCode": { "text": "hepatitis B surface antigen vaccine", "coding": [ { "system": "http://www.nlm.nih.gov/research/umls/rxnorm", "code": "797752", "display": "hepatitis B surface antigen vaccine" } ] },
+          "route": { "coding": [ { "system": "http://terminology.hl7.org/CodeSystem/v3-RouteOfAdministration", "code": "IM", "display": "Intramuscular" } ] },
+          "occurrenceDateTime": "2017-12-05T10:40:30+00:00"
+        }
+      ],
+      "omop": {
+        "drug_exposure": [
+          {
+            "person_id": "ref:patient-6",
+            "drug_concept_id": 528323,
+            "drug_exposure_start_date": "2017-12-05",
+            "drug_exposure_start_datetime": "2017-12-05T10:40:30",
+            "drug_exposure_end_date": "2017-12-05",
+            "drug_exposure_end_datetime": "2017-12-05T10:40:30",
+            "drug_type_concept_id": 32827,
+            "visit_occurrence_id": "ref:enc-5",
+            "drug_source_value": "797752",
+            "drug_source_concept_id": 528323,
+            "route_concept_id": 4302612,
+            "route_concept_id__name": "Intramuscular",
+            "route_source_value": "IM"
+          }
+        ]
+      }
+    },
+    {
+      "desc": "(i) Immunization with a route code NOT in cm.route_to_omop → route present but unmapped, so route_concept_id = 0 ('No matching concept') while route_source_value still preserves the raw code (distinct from absent route, which stays NULL — variants c/d/f)",
+      "fhir": [
+        { "resourceType": "Patient", "id": "patient-7", "gender": "female", "birthDate": "2010-01-01" },
+        { "resourceType": "Encounter", "id": "enc-6", "status": "finished", "class": { "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode", "code": "AMB" }, "subject": { "reference": "Patient/patient-7" } },
+        {
+          "resourceType": "Immunization",
+          "id": "imm-7",
+          "status": "completed",
+          "primarySource": true,
+          "patient": { "reference": "Patient/patient-7" },
+          "encounter": { "reference": "Encounter/enc-6" },
+          "vaccineCode": { "text": "hepatitis B surface antigen vaccine", "coding": [ { "system": "http://www.nlm.nih.gov/research/umls/rxnorm", "code": "797752", "display": "hepatitis B surface antigen vaccine" } ] },
+          "route": { "coding": [ { "system": "http://snomed.info/sct", "code": "999999", "display": "Bogus unmapped route" } ] },
+          "occurrenceDateTime": "2017-12-05T10:40:30+00:00"
+        }
+      ],
+      "omop": {
+        "drug_exposure": [
+          {
+            "person_id": "ref:patient-7",
+            "drug_concept_id": 528323,
+            "drug_exposure_start_date": "2017-12-05",
+            "drug_exposure_start_datetime": "2017-12-05T10:40:30",
+            "drug_exposure_end_date": "2017-12-05",
+            "drug_exposure_end_datetime": "2017-12-05T10:40:30",
+            "drug_type_concept_id": 32827,
+            "visit_occurrence_id": "ref:enc-6",
+            "drug_source_value": "797752",
+            "drug_source_concept_id": 528323,
+            "route_concept_id": 0,
+            "route_source_value": "999999"
+          }
+        ]
+      }
     }
   ]
 }

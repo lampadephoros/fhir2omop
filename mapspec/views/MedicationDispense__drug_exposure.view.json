@@ -27,7 +27,8 @@
         { "name": "drug_ndc",       "path": "medication.ofType(CodeableConcept).coding.where(system=%ndcSystem).code.first()",    "type": "code" },
         { "name": "dispense_dt",    "path": "whenHandedOver",                                                                     "type": "dateTime" },
         { "name": "quantity_value", "path": "quantity.value",                                                                     "type": "decimal" },
-        { "name": "days_supply",    "path": "daysSupply.value",                                                                   "type": "integer" }
+        { "name": "days_supply",    "path": "daysSupply.value",                                                                   "type": "integer" },
+        { "name": "route_code",     "path": "dosageInstruction.route.coding.code.first()",                                         "type": "code" }
       ]
     }
   ]

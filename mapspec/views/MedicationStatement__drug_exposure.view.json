@@ -28,7 +28,8 @@
         { "name": "effective_dt",  "path": "effective.ofType(dateTime)",                                                         "type": "dateTime" },
         { "name": "period_start",  "path": "effective.ofType(Period).start",                                                     "type": "dateTime" },
         { "name": "period_end",    "path": "effective.ofType(Period).end",                                                       "type": "dateTime" },
-        { "name": "status_code",   "path": "status",                                                                             "type": "code" }
+        { "name": "status_code",   "path": "status",                                                                             "type": "code" },
+        { "name": "route_code",     "path": "dosage.route.coding.code.first()",                                                   "type": "code" }
       ]
     }
   ]

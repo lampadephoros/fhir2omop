@@ -29,7 +29,8 @@
         { "name": "code_ndc",      "path": "medication.ofType(CodeableConcept).coding.where(system=%ndcSystem).code.first()",    "type": "code",     "description": "NDC fallback." },
         { "name": "code_text",     "path": "medication.ofType(CodeableConcept).text",                                            "type": "string",   "description": "Drug display label." },
         { "name": "authored_on",   "path": "authoredOn",                                                                         "type": "dateTime", "description": "When prescribed → drug_exposure_start_datetime." },
-        { "name": "status_code",   "path": "status",                                                                             "type": "code",     "description": "active / completed / on-hold / cancelled / stopped." }
+        { "name": "status_code",   "path": "status",                                                                             "type": "code",     "description": "active / completed / on-hold / cancelled / stopped." },
+        { "name": "route_code",     "path": "dosageInstruction.route.coding.code.first()",                                         "type": "code",     "description": "MedicationRequest.dosageInstruction.route code → route_concept_id via cm.route_to_omop; raw code → route_source_value." }
       ]
     }
   ]

@@ -28,7 +28,8 @@
         { "name": "code_rxnorm",   "path": "vaccineCode.coding.where(system=%rxnormSystem).code.first()",        "type": "code",     "description": "RxNorm fallback." },
         { "name": "code_text",     "path": "vaccineCode.text",                                                   "type": "string",   "description": "Vaccine display name." },
         { "name": "occurrence_dt", "path": "occurrence.ofType(dateTime)",                                        "type": "dateTime", "description": "When the immunization happened." },
-        { "name": "status_code",   "path": "status",                                                             "type": "code",     "description": "completed / entered-in-error / not-done." }
+        { "name": "status_code",   "path": "status",                                                             "type": "code",     "description": "completed / entered-in-error / not-done." },
+        { "name": "route_code",     "path": "route.coding.code.first()",                                          "type": "code",     "description": "Administration route code (v3 RouteOfAdministration or SNOMED) → route_concept_id via cm.route_to_omop; raw code → route_source_value." }
       ]
     }
   ]

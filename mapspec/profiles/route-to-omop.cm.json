@@ -1,0 +1,49 @@
+{
+  "resourceType": "ConceptMap",
+  "id": "route-to-omop",
+  "url": "https://fhir2omop.health-samurai.io/ConceptMap/route-to-omop",
+  "version": "0.1.0",
+  "name": "RouteToOmop",
+  "title": "FHIR route of administration → OMOP route_concept_id (Route domain)",
+  "status": "active",
+  "experimental": true,
+  "description": "Maps a drug administration route code to the OMOP standard Route-domain concept_id (drug_exposure.route_concept_id). Two groups, keyed by source code (v3 abbreviations are alphabetic, SNOMED codes numeric — no clash, so stage-2 joins on the code alone like gender-to-omop). Group 1 is the HL7 FHIR-to-OMOP IG ConceptMap 'ImmunizationRoute' (input/fsh/ImmunizationConceptMaps.fsh) verbatim — HL7 v3 RouteOfAdministration abbreviations. Group 2 is a SNOMED CT route passthrough grounded in the loaded Athena bundle (each SNOMED route source code Maps-to the same standard Route concept), because real FHIR R4 data (US Core, Synthea) codes Dosage.route / Immunization.route in SNOMED. All targets verified standard_concept='S', domain_id='Route'.",
+  "targetUri": "https://athena.ohdsi.org/search-terms/terms?domain=Route&standardConcept=Standard",
+  "group": [
+    {
+      "source": "http://terminology.hl7.org/CodeSystem/v3-RouteOfAdministration",
+      "target": "https://athena.ohdsi.org/search-terms/terms?domain=Route",
+      "element": [
+        { "code": "IM",       "display": "Intramuscular", "target": [{ "code": "4302612", "display": "Intramuscular", "equivalence": "equivalent" }] },
+        { "code": "PO",       "display": "Oral",          "target": [{ "code": "4132161", "display": "Oral",          "equivalence": "equivalent" }] },
+        { "code": "SQ",       "display": "Subcutaneous",  "target": [{ "code": "4142048", "display": "Subcutaneous",  "equivalence": "equivalent" }] },
+        { "code": "IDINJ",    "display": "Intradermal",   "target": [{ "code": "4156706", "display": "Intradermal",   "equivalence": "equivalent" }] },
+        { "code": "IVINJ",    "display": "Intravenous",   "target": [{ "code": "4171047", "display": "Intravenous",   "equivalence": "equivalent" }] },
+        { "code": "TRNSDERM", "display": "Transdermal",   "target": [{ "code": "4262099", "display": "Transdermal",   "equivalence": "equivalent" }] }
+      ]
+    },
+    {
+      "source": "http://snomed.info/sct",
+      "target": "https://athena.ohdsi.org/search-terms/terms?domain=Route",
+      "element": [
+        { "code": "26643006",  "display": "Oral route",            "target": [{ "code": "4132161",  "display": "Oral",             "equivalence": "equivalent" }] },
+        { "code": "78421000",  "display": "Intramuscular route",   "target": [{ "code": "4302612",  "display": "Intramuscular",    "equivalence": "equivalent" }] },
+        { "code": "47625008",  "display": "Intravenous route",     "target": [{ "code": "4171047",  "display": "Intravenous",      "equivalence": "equivalent" }] },
+        { "code": "372464004", "display": "Intradermal use",       "target": [{ "code": "4156706",  "display": "Intradermal",      "equivalence": "equivalent" }] },
+        { "code": "34206005",  "display": "Subcutaneous route",    "target": [{ "code": "4142048",  "display": "Subcutaneous",     "equivalence": "equivalent" }] },
+        { "code": "45890007",  "display": "Transdermal route",     "target": [{ "code": "4262099",  "display": "Transdermal",      "equivalence": "equivalent" }] },
+        { "code": "46713006",  "display": "Nasal route",           "target": [{ "code": "4262914",  "display": "Nasal",            "equivalence": "equivalent" }] },
+        { "code": "54485002",  "display": "Ophthalmic route",      "target": [{ "code": "4184451",  "display": "Ophthalmic",       "equivalence": "equivalent" }] },
+        { "code": "10547007",  "display": "Otic route",            "target": [{ "code": "4023156",  "display": "Otic",             "equivalence": "equivalent" }] },
+        { "code": "37161004",  "display": "Rectal route",          "target": [{ "code": "4290759",  "display": "Rectal",           "equivalence": "equivalent" }] },
+        { "code": "6064005",   "display": "Topical route",         "target": [{ "code": "4263689",  "display": "Topical",          "equivalence": "equivalent" }] },
+        { "code": "16857009",  "display": "Vaginal route",         "target": [{ "code": "4057765",  "display": "Vaginal",          "equivalence": "equivalent" }] },
+        { "code": "420254004", "display": "Body cavity route",     "target": [{ "code": "4222254",  "display": "Body cavity",      "equivalence": "equivalent" }] },
+        { "code": "372449004", "display": "Dental use",            "target": [{ "code": "4163765",  "display": "Dental",           "equivalence": "equivalent" }] },
+        { "code": "404820008", "display": "Epidural route",        "target": [{ "code": "4225555",  "display": "Epidural",         "equivalence": "equivalent" }] },
+        { "code": "58100008",  "display": "Intra-arterial route",  "target": [{ "code": "4240824",  "display": "Intra-arterial",   "equivalence": "equivalent" }] },
+        { "code": "447694001", "display": "Respiratory tract route","target": [{ "code": "40486069", "display": "Respiratory tract","equivalence": "equivalent" }] }
+      ]
+    }
+  ]
+}
