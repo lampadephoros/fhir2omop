@@ -1,36 +1,59 @@
 export default async function (ctx: Context) {
-    const port = Number(ctx.env.PORT) || 3000;
+    // Stable, project-unique 5-digit port derived from the working directory,
+    // so each project gets its own and we stop colliding with common ports
+    // (3000/4000) or sibling dev servers. An explicit PORT env var wins and is
+    // used verbatim; otherwise the derived port advances on EADDRINUSE so a
+    // restart never crashes on a busy port.
+    const explicit = Number(ctx.env.PORT) || 0;
     const logFile = Bun.file(".hyper/_runtime/http.log").writer();
     (ctx.state as any).http = { logFile };
 
-    const server = Bun.serve({
-        port,
-        hostname: "0.0.0.0",
-        // Default idleTimeout (10s) is fine for normal requests. Long-poll routes
-        // override per-request via ctx.state.server.server.timeout(req, ...).
-        async fetch(req) {
-            const t0 = performance.now();
-            const url = new URL(req.url);
-            const m = ctx.fns.http.match(ctx.routes, req.method, url.pathname);
-            if (!m) {
-                log(logFile, req.method, url.pathname + url.search, 404, performance.now() - t0);
-                return new Response("Not Found", { status: 404 });
-            }
-            (req as any).params = m.params;
-            try {
-                const raw = await m.handler(ctx, null, req);
-                const res = toResponse(ctx, raw, req);
-                log(logFile, req.method, url.pathname + url.search, res.status, performance.now() - t0);
-                return res;
-            } catch (e: any) {
-                log(logFile, req.method, url.pathname + url.search, 500, performance.now() - t0, e?.message);
-                throw e;
-            }
-        },
-    });
+    // Default idleTimeout (10s) is fine for normal requests. Long-poll routes
+    // override per-request via ctx.state.server.server.timeout(req, ...).
+    const fetchHandler = async (req: Request): Promise<Response> => {
+        const t0 = performance.now();
+        const url = new URL(req.url);
+        const m = ctx.fns.http.match(ctx.routes, req.method, url.pathname);
+        if (!m) {
+            log(logFile, req.method, url.pathname + url.search, 404, performance.now() - t0);
+            return new Response("Not Found", { status: 404 });
+        }
+        (req as any).params = m.params;
+        try {
+            const raw = await m.handler(ctx, null, req);
+            const res = toResponse(ctx, raw, req);
+            log(logFile, req.method, url.pathname + url.search, res.status, performance.now() - t0);
+            return res;
+        } catch (e: any) {
+            log(logFile, req.method, url.pathname + url.search, 500, performance.now() - t0, e?.message);
+            throw e;
+        }
+    };
+
+    let port = explicit || projectPort(process.cwd());
+    let server: any;
+    for (let attempt = 0; attempt < 25 && !server; attempt++) {
+        try {
+            server = Bun.serve({ port, hostname: "0.0.0.0", fetch: fetchHandler });
+        } catch (e: any) {
+            // Advance only for the derived port; an explicit PORT is honored exactly.
+            if (e?.code === "EADDRINUSE" && !explicit) { port++; continue; }
+            throw e;
+        }
+    }
+    if (!server) throw new Error(`no free 5-digit port found near ${port}`);
     ctx.state.server = { server, port };
     await Bun.write(".hyper/_runtime/port", String(port));
     console.log(`[server] listening on http://localhost:${port}  (written to .hyper/_runtime/port)`);
+}
+
+// Stable 5-digit port unique to the project directory (djb2-style hash →
+// 20000..44999, below macOS's ephemeral range so we don't fight transient
+// sockets). Same cwd → same port across restarts.
+function projectPort(seed: string): number {
+    let h = 5381;
+    for (let i = 0; i < seed.length; i++) h = ((h * 33) ^ seed.charCodeAt(i)) >>> 0;
+    return 20000 + (h % 25000);
 }
 
 // Auto-wrap handler return values:

@@ -50,3 +50,4 @@ athena/
 # synthea2omop subfolder — cloned upstream + 6GB CSV/FHIR outputs.
 # It's its own git repo; document setup in CLAUDE.md, don't track here.
 synthea2omop/
+tmp/
