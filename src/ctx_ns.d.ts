@@ -41,6 +41,7 @@ declare global {
         mapspec: {
         byResource: typeof import("./mapspec/byResource").default;
         byTable: typeof import("./mapspec/byTable").default;
+        fmlForEdge: typeof import("./mapspec/fmlForEdge").default;
         list: typeof import("./mapspec/list").default;
         loadEdges: typeof import("./mapspec/loadEdges").default;
         render: typeof import("./mapspec/render").default;

@@ -329,6 +329,15 @@ async function renderEdge(ctx: Context, edge: Edge): Promise<string> {
 
     if (etlSql) parts.push(renderEtlSqlCard(etlSql, `${edge.fhir_resource}__${edge.omop_table}.sql`));
 
+    // HL7 FHIR-to-OMOP IG StructureMap(s) for the same edge — "their transform"
+    // (FHIR Mapping Language) shown next to our SQL-on-FHIR above. Sourced from
+    // the refs/refs/fhir-omop-ig submodule; absent edges just skip the card.
+    const fmls = await ctx.fns.mapspec.fmlForEdge(ctx, {
+        resource: edge.fhir_resource,
+        table: edge.omop_table,
+    });
+    for (const fml of fmls) parts.push(renderFmlCard(fml));
+
     // Golden test cases relevant to this edge — replaces the retired cdm.* oracle
     // diff + the Synthea sample-rows ("examples") card. These are the correctness
     // gate: self-contained, branch-by-branch, with pass/fail from the last
@@ -757,6 +766,69 @@ function renderEtlSqlCard(sql: string, filename: string): string {
   </div>
   <pre class="px-4 py-3 text-[11px] leading-relaxed overflow-x-auto bg-white font-mono whitespace-pre m-0">${highlighted}</pre>
 </div>`;
+}
+
+// HL7 FHIR-to-OMOP IG StructureMap card — the IG's FHIR Mapping Language
+// transform for this edge, shown right below our Stage-2 SQL so the two
+// approaches sit side by side. Links to the raw .fml (source viewer) and the
+// upstream canonical URL.
+function renderFmlCard(fml: {
+    file: string;
+    path: string;
+    name?: string;
+    title?: string;
+    url?: string;
+    description?: string;
+    fml: string;
+}): string {
+    const lines = fml.fml.split("\n").length;
+    const highlighted = highlightFml(fml.fml);
+    const q = new URLSearchParams({ path: fml.path });
+    const upstream = fml.url
+        ? `<a href="${esc(fml.url)}" target="_blank" rel="noopener" class="text-[11px] text-sky-700 hover:underline">canonical ↗</a>`
+        : "";
+    return `
+<div class="mb-6 border border-sky-200 rounded-lg overflow-hidden">
+  <div class="flex items-center justify-between px-4 py-2 bg-sky-50 border-b border-sky-200">
+    <div class="flex items-center gap-2 text-xs">
+      <span class="text-[10px] uppercase tracking-wider text-sky-800 font-semibold">HL7 FHIR→OMOP IG · StructureMap (FML)</span>
+      <a href="/source?${q.toString()}" class="font-mono text-sm text-sky-900 hover:underline">${esc(fml.file)}</a>
+    </div>
+    <span class="text-[11px] text-sky-700">${lines} lines${upstream ? ` · ${upstream}` : ""}</span>
+  </div>
+  ${fml.title ? `<div class="px-4 py-2 text-[12px] text-gray-700 bg-sky-25 border-b border-sky-100"><strong>${esc(fml.title)}</strong>${fml.description ? `<div class="text-[11px] text-gray-500 mt-0.5">${esc(fml.description)}</div>` : ""}</div>` : ""}
+  <pre class="px-4 py-3 text-[11px] leading-relaxed overflow-x-auto bg-white font-mono whitespace-pre m-0">${highlighted}</pre>
+</div>`;
+}
+
+// Lightweight FHIR Mapping Language highlighter — metadata, keywords, strings,
+// comments. Order matters: comments/metadata before keyword/string passes.
+function highlightFml(src: string): string {
+    const esc1 = (s: string) =>
+        s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const out = src.split("\n").map((line) => {
+        let h = esc1(line);
+        // /// metadata header lines
+        if (/^\s*\/\/\//.test(line)) {
+            return `<span style="color:#0891b2">${h}</span>`;
+        }
+        // // line comments
+        h = h.replace(/(\/\/[^\n]*)/g, '<span style="color:#94a3b8">$1</span>');
+        // double-quoted strings
+        h = h.replace(/(&quot;[^&]*?&quot;|"[^"]*")/g, '<span style="color:#16a34a">$1</span>');
+        // single-quoted strings
+        h = h.replace(/('[^']*')/g, '<span style="color:#16a34a">$1</span>');
+        // keywords
+        const kws = [
+            "uses", "alias", "as", "source", "target", "group", "then",
+            "where", "imports", "extends", "default", "first", "last",
+            "translate", "cast", "create", "copy", "truncate", "reference",
+        ];
+        const kwRe = new RegExp("\\b(" + kws.join("|") + ")\\b", "g");
+        h = h.replace(kwRe, '<span style="color:#0369a1;font-weight:600">$1</span>');
+        return h;
+    }).join("\n");
+    return out;
 }
 
 // Lightweight SQL syntax highlighter — keywords + strings + numbers + comments.
