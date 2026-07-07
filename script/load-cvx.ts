@@ -1,94 +1,143 @@
 #!/usr/bin/env bun
-// Load CVX (vaccine codes) into vocab.* from the CDC source.
+// Load the REAL OHDSI CVX vocabulary (vaccine codes) into vocab.* — surgical,
+// non-destructive, fast. No full Athena reload.
 //
-// Background: the Athena bundle excludes CVX (license). Synthea
-// Immunization resources are 100% CVX-coded, so without this our
-// drug_exposure pipeline drops every immunization on the floor.
+// Why this exists: Immunization.vaccineCode is CVX-coded and CVX is the
+// preferred OMOP Drug vocabulary for vaccines. The default Athena bundle was
+// generated WITHOUT CVX, so vaccines otherwise resolve to drug_concept_id=0.
+// This splices the real CVX (normal concept_ids, Standard flags, 'Maps to'
+// self/cross maps) out of a CVX-inclusive Athena bundle into the existing
+// vocab.*, replacing any prior CVX rows. See docs/cvx-vocabulary.md.
 //
-// CDC publishes CVX as a pipe-delimited text file (no auth, ~200 rows):
-//   https://www2a.cdc.gov/vaccines/iis/iisstandards/downloads/cvx.txt
+// Source of the bundle (in priority order):
+//   1. a path argument: a bundle .zip OR an unzipped bundle dir
+//   2. $CVX_BUNDLE_URL / the default public "magic URL" — downloaded to a temp
+//      file (the bundle carries only CVX + the shared vocabs; the licensed
+//      SNOMED/CPT4 come from your main Athena load, this just adds CVX).
 //
-// Format: code | short_name | full_name | notes | status | nonvaccine | update_date
+//   bun script/load-cvx.ts                       # download from the magic URL
+//   bun script/load-cvx.ts path/to/bundle.zip    # local zip
+//   bun script/load-cvx.ts path/to/bundle-dir/   # unzipped dir
 //
-// We load these into vocab.concept with synthetic concept_ids starting
-// from the OMOP Extension reserve range (2_000_000_000) so they can't
-// collide with future Athena bundle imports. domain_id='Drug',
-// vocabulary_id='CVX', standard_concept=NULL (CVX is non-standard;
-// Maps-to → RxNorm would come from a future Athena bundle that
-// includes it).
-//
-//   bun script/load-cvx.ts                # idempotent: skips if vocabulary_id='CVX' already has rows
+// It: (1) extracts CVX concepts from CONCEPT.csv, (2) extracts CVX 'Maps to'
+// rows from CONCEPT_RELATIONSHIP.csv, (3) pulls any 'Maps to' target concepts
+// not already present, (4) in one transaction DELETEs the old CVX and INSERTs
+// the real CVX + missing targets + relationships. Idempotent.
 
-import { SQL } from "bun";
+import { $, SQL } from "bun";
+import { statSync } from "node:fs";
+import { join } from "node:path";
 
-const CDC_URL = "https://www2a.cdc.gov/vaccines/iis/iisstandards/downloads/cvx.txt";
-const CONCEPT_ID_BASE = 2_000_000_000;
+// Public capability URL (sha256-hashed path) for the CVX-inclusive Athena
+// bundle. Override with $CVX_BUNDLE_URL. See docs/cvx-vocabulary.md.
+const MAGIC_URL = process.env.CVX_BUNDLE_URL ??
+    "https://storage.googleapis.com/atomic-ehr-athena-public/240cac7c2e8d7a578ed64661372caa37b85dd2b6fd601522e271886e95a32fe2/athena-bundle-20260707-v20260227-cvx.zip";
 
-const sql = new SQL(process.env.ATHENA_DSN ?? "postgresql://athena:athena@localhost:54392/athena");
+const DSN = process.env.ATHENA_DSN ?? "postgresql://athena:athena@localhost:54392/athena";
+const sql = new SQL(DSN);
+const work = process.env.TMPDIR ?? "/tmp";
 
-const [{ existing }] = await sql.unsafe(
-    `SELECT count(*)::int AS existing FROM vocab.concept WHERE vocabulary_id = 'CVX'`,
-);
-if (existing > 0) {
-    console.log(`CVX already loaded (${existing} rows). Pass --force to reload.`);
-    if (!process.argv.includes("--force")) {
-        await sql.end();
-        process.exit(0);
+// Resolve the bundle source: a given path, or download the magic URL.
+let src = process.argv[2];
+let downloaded: string | null = null;
+if (!src) {
+    downloaded = join(work, `cvx-bundle.${process.pid}.zip`);
+    console.log(`no path given — downloading CVX bundle from:\n  ${MAGIC_URL}`);
+    await $`curl -fsSL -o ${downloaded} ${MAGIC_URL}`;
+    src = downloaded;
+}
+
+// Stream CSVs from a dir or straight out of the zip (unzip -p), so we never
+// extract the multi-GB files to disk.
+const isZip = statSync(src).isFile();
+const cat = (name: string) =>
+    isZip ? $`unzip -p ${src} ${name}`.lines() : $`cat ${join(src!, name)}`.lines();
+
+const fConcept = join(work, `cvx_concept.${process.pid}.tsv`);
+const fRel = join(work, `cvx_rel.${process.pid}.tsv`);
+const fTgt = join(work, `cvx_tgt.${process.pid}.tsv`);
+
+// 1. CVX concepts (vocabulary_id in column 4, tab-delimited, no quoting)
+console.log("scanning CONCEPT.csv for CVX…");
+const cvxIds = new Set<string>();
+const conceptLines: string[] = [];
+for await (const line of cat("CONCEPT.csv")) {
+    const f = line.split("\t");
+    if (f[3] === "CVX") { cvxIds.add(f[0]!); conceptLines.push(line); }
+}
+if (!cvxIds.size) { console.error("no CVX rows in CONCEPT.csv — is this a CVX-inclusive bundle?"); process.exit(1); }
+await Bun.write(fConcept, conceptLines.join("\n") + "\n");
+console.log(`  ${cvxIds.size} CVX concepts`);
+
+// 2. CVX 'Maps to' relationships (concept_id_1 ∈ CVX)
+console.log("scanning CONCEPT_RELATIONSHIP.csv for CVX 'Maps to'…");
+const relLines: string[] = [];
+const targetIds = new Set<string>();
+for await (const line of cat("CONCEPT_RELATIONSHIP.csv")) {
+    const f = line.split("\t");
+    if (cvxIds.has(f[0]!) && f[2] === "Maps to" && !f[5]) { relLines.push(line); targetIds.add(f[1]!); }
+}
+await Bun.write(fRel, relLines.join("\n") + "\n");
+console.log(`  ${relLines.length} 'Maps to' rows`);
+
+// 3. Maps-to targets not already in vocab.concept and not themselves CVX
+const nonCvxTargets = [...targetIds].filter((id) => !cvxIds.has(id) && /^\d+$/.test(id));
+let missing: string[] = [];
+if (nonCvxTargets.length) {
+    // inline the id list (all validated integers) — Bun.SQL doesn't bind a JS
+    // array to a `$1::bigint[]` placeholder.
+    const rows = await sql.unsafe(
+        `SELECT t.id::text AS id FROM unnest(ARRAY[${nonCvxTargets.join(",")}]::bigint[]) AS t(id)
+         LEFT JOIN vocab.concept c ON c.concept_id = t.id WHERE c.concept_id IS NULL`,
+    );
+    missing = rows.map((r: any) => r.id);
+}
+if (missing.length) {
+    console.log(`  ${missing.length} Maps-to target concepts missing locally — pulling from CONCEPT.csv…`);
+    const want = new Set(missing);
+    const tgtLines: string[] = [];
+    for await (const line of cat("CONCEPT.csv")) {
+        if (want.has(line.slice(0, line.indexOf("\t")))) tgtLines.push(line);
     }
-    await sql.unsafe(`DELETE FROM vocab.concept WHERE vocabulary_id = 'CVX'`);
-    await sql.unsafe(`DELETE FROM vocab.vocabulary WHERE vocabulary_id = 'CVX'`);
-    console.log("  cleared, reloading…");
+    await Bun.write(fTgt, tgtLines.join("\n") + "\n");
+} else {
+    console.log("  all Maps-to targets already present locally");
+    await Bun.write(fTgt, "");
 }
 
-console.log(`fetching ${CDC_URL}`);
-const resp = await fetch(CDC_URL);
-if (!resp.ok) {
-    console.error(`failed: HTTP ${resp.status}`);
-    process.exit(1);
-}
-const text = await resp.text();
-const lines = text.split("\n").filter((l) => l.trim());
+// 4. load in one transaction via psql (\copy is client-side)
+const load = `
+CREATE TEMP TABLE stg_c (concept_id text, concept_name text, domain_id text, vocabulary_id text, concept_class_id text, standard_concept text, concept_code text, valid_start_date text, valid_end_date text, invalid_reason text);
+\\copy stg_c FROM '${fConcept}' WITH (FORMAT csv, DELIMITER E'\\t', HEADER false, QUOTE E'\\b', NULL '')
+CREATE TEMP TABLE stg_t (LIKE stg_c);
+\\copy stg_t FROM '${fTgt}' WITH (FORMAT csv, DELIMITER E'\\t', HEADER false, QUOTE E'\\b', NULL '')
+CREATE TEMP TABLE stg_r (concept_id_1 text, concept_id_2 text, relationship_id text, valid_start_date text, valid_end_date text, invalid_reason text);
+\\copy stg_r FROM '${fRel}' WITH (FORMAT csv, DELIMITER E'\\t', HEADER false, QUOTE E'\\b', NULL '')
 
-const rows: { code: string; name: string; notes: string; status: string; date: string }[] = [];
-for (const line of lines) {
-    const parts = line.split("|").map((p) => p.trim());
-    if (parts.length < 6) continue;
-    const [code, _short, full, notes, status, _nonvax, date] = parts;
-    if (!code || !/^\d+$/.test(code)) continue;
-    rows.push({ code, name: full!, notes: notes ?? "", status: status ?? "Active", date: date ?? "2000/01/01" });
-}
-console.log(`parsed ${rows.length} CVX codes from CDC`);
+BEGIN;
+DELETE FROM vocab.concept_relationship WHERE concept_id_1 IN (SELECT concept_id FROM vocab.concept WHERE vocabulary_id='CVX') OR concept_id_2 IN (SELECT concept_id FROM vocab.concept WHERE vocabulary_id='CVX');
+DELETE FROM vocab.concept WHERE vocabulary_id='CVX';
+INSERT INTO vocab.concept (concept_id, concept_name, domain_id, vocabulary_id, concept_class_id, standard_concept, concept_code, valid_start_date, valid_end_date, invalid_reason)
+SELECT concept_id::int, concept_name, domain_id, vocabulary_id, concept_class_id, NULLIF(standard_concept,''), concept_code, to_date(NULLIF(valid_start_date,''),'YYYYMMDD'), to_date(NULLIF(valid_end_date,''),'YYYYMMDD'), NULLIF(invalid_reason,'')
+FROM (SELECT * FROM stg_c UNION ALL SELECT * FROM stg_t) s;
+INSERT INTO vocab.concept_relationship (concept_id_1, concept_id_2, relationship_id, valid_start_date, valid_end_date, invalid_reason)
+SELECT concept_id_1::int, concept_id_2::int, relationship_id, to_date(NULLIF(valid_start_date,''),'YYYYMMDD'), to_date(NULLIF(valid_end_date,''),'YYYYMMDD'), NULLIF(invalid_reason,'')
+FROM stg_r;
+INSERT INTO vocab.vocabulary (vocabulary_id, vocabulary_name, vocabulary_reference, vocabulary_version, vocabulary_concept_id)
+SELECT 'CVX', 'CDC Vaccine Administered (CVX)', 'OMOP Athena', 'CVX (Athena bundle)', 0
+WHERE NOT EXISTS (SELECT 1 FROM vocab.vocabulary WHERE vocabulary_id='CVX');
+UPDATE vocab.vocabulary SET vocabulary_version='CVX (Athena bundle, real)' WHERE vocabulary_id='CVX';
+COMMIT;
+`;
+console.log("loading into vocab.* …");
+const fLoad = join(work, `cvx_load.${process.pid}.sql`);
+await Bun.write(fLoad, load);
+await $`psql ${DSN} -v ON_ERROR_STOP=1 -q -f ${fLoad}`.quiet();
+await $`rm -f ${fLoad}`.quiet().nothrow();
+await sql.unsafe("ANALYZE vocab.concept; ANALYZE vocab.concept_relationship;");
 
-// Register the vocabulary itself.
-const [{ has_vocab }] = await sql.unsafe(
-    `SELECT count(*)::int AS has_vocab FROM vocab.vocabulary WHERE vocabulary_id = 'CVX'`,
-);
-if (!has_vocab) {
-    await sql.unsafe(
-        `INSERT INTO vocab.vocabulary
-            (vocabulary_id, vocabulary_name, vocabulary_reference, vocabulary_version, vocabulary_concept_id)
-         VALUES ('CVX', 'CDC Vaccine Administered (CVX)', $1, current_date::text, 0)`,
-        [CDC_URL],
-    );
-}
-
-const today = new Date().toISOString().slice(0, 10);
-let inserted = 0;
-for (const [i, row] of rows.entries()) {
-    const conceptId = CONCEPT_ID_BASE + i;
-    const validStart = (row.date ?? "2000/01/01").replaceAll("/", "-");
-    const validEnd   = row.status === "Active" ? "2099-12-31" : today;
-    const invalid    = row.status === "Active" ? null : "D";
-    await sql.unsafe(
-        `INSERT INTO vocab.concept (
-            concept_id, concept_name, domain_id, vocabulary_id, concept_class_id,
-            standard_concept, concept_code, valid_start_date, valid_end_date, invalid_reason
-         ) VALUES ($1, $2, 'Drug', 'CVX', 'CVX', NULL, $3, $4::date, $5::date, $6)`,
-        [conceptId, row.name.slice(0, 255), row.code, validStart, validEnd, invalid],
-    );
-    inserted++;
-}
-
-console.log(`inserted ${inserted} CVX concepts (concept_id range ${CONCEPT_ID_BASE}..${CONCEPT_ID_BASE + inserted - 1})`);
-await sql.unsafe(`ANALYZE vocab.concept`);
+const [{ std }] = await sql.unsafe(
+    `SELECT count(*)::int std FROM vocab.concept WHERE vocabulary_id='CVX' AND standard_concept='S'`);
+console.log(`done: CVX reloaded (${cvxIds.size} concepts, ${std} Standard) with real 'Maps to' crosswalks.`);
+await $`rm -f ${fConcept} ${fRel} ${fTgt} ${downloaded ?? ""}`.quiet().nothrow();
 await sql.end();

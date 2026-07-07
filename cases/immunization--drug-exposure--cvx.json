@@ -1,6 +1,6 @@
 {
   "title": "Immunization → drug_exposure (CVX)",
-  "notes": "The drug branch is fanned in from several FHIR source resources that all land in OMOP `drug_exposure`, each with its own stage-2 SQL and a distinct `drug_type_concept_id` constant:\n\n- `MedicationRequest__drug_exposure.sql` — prescription order. `drug_type_concept_id = 38000177` ('Prescription written'). RxNorm preferred, NDC fallback (inner JOIN on 'Maps to' → standard Drug, so an unmapped code yields NO row). `drug_exposure_start_date = end_date = authoredOn`; the `_datetime` pair is `authoredOn::timestamp`. `person_id ← subject`, `visit_occurrence_id ← encounter`, `provider_id ← requester`. Status filter drops `entered-in-error / cancelled / draft / unknown`.\n- `MedicationAdministration__drug_exposure.sql` — drug actually given. `drug_type_concept_id = 38000179` (vocab name in this bundle: 'Physician administered drug (identified as procedure)'). RxNorm > NDC > SNOMED (inner JOIN to standard Drug). `start = end = effectiveDateTime`. `person_id ← subject`, `visit_occurrence_id ← context` (R4 'context'). NO provider mapped → `provider_id` NULL. Status filter (NULL treated as 'completed') drops `entered-in-error / not-done / unknown`.\n- `Immunization__drug_exposure.sql` — point-in-time vaccination. `drug_type_concept_id = 32827` ('EHR encounter record'). CVX preferred, RxNorm fallback. Uses a **LEFT JOIN** to 'Maps to', so a CVX code with no crosswalk still produces a row with `drug_concept_id = 0` while `drug_source_concept_id` keeps the CVX source concept. `start = end = occurrenceDateTime`. `person_id ← patient`, `visit_occurrence_id ← encounter`. NO provider. Status filter drops `entered-in-error / not-done`.\n\nGrounding notes from the live May-2026 Athena bundle:\n- RxNorm 896209 → standard Drug 40169281 (self-map). RxNorm 1665060 (cefazolin 2000 MG Injection) → 46287345 (self-map). RxNorm 797752 (hepatitis B surface antigen vaccine) → 528323 (self-map). All three are vocabulary_id='RxNorm', domain_id='Drug', standard 'S', and 'Maps to' themselves.\n- The CVX vocabulary in this bundle is a freshly-loaded synthetic-id block (concept_id 2000000000–2000000288, ALL non-standard, ZERO 'Maps to' relationships). Therefore **no CVX code crosswalks to a standard Drug here** — variant (d) (CVX 08 → 2000000029, drug_concept_id 0) is exactly this reality. Because a CVX→Drug crosswalk genuinely does not exist in the loaded vocab, the 'Immunization that DOES crosswalk' variant (c) is constructed via the edge's documented RxNorm **fallback** path on the Immunization (Synthea would emit CVX, but the edge accepts RxNorm and that is the only way to get a non-zero drug_concept_id from this resource against this bundle).\n- Datetime casts: stage-2 uses `::timestamp` on the FHIR dateTime string with a `+00:00` offset, which Postgres truncates to wall-clock (e.g. '2023-12-07T18:39:19+00:00'::timestamp = '2023-12-07 18:39:19') — NO UTC shift (unlike Procedure). Confirmed against the actual cdm_ours_fhir.drug_exposure row for Synthea MedicationAdministration 18071d58-3d43-cb2e-15ff-b72638e1b241.\n\nEvery non-NULL drug_exposure column is asserted; the columns the stage-2 SELECTs hard-code to NULL (verbatim_end_date, stop_reason, refills, quantity, days_supply, sig, route_concept_id, lot_number, visit_detail_id, route_source_value, dose_unit_source_value) are omitted and therefore asserted NULL. drug_exposure is the ONLY target table for this branch; an `omop:{}` case asserts zero rows everywhere.",
+  "notes": "The drug branch is fanned in from several FHIR source resources that all land in OMOP `drug_exposure`, each with its own stage-2 SQL and a distinct `drug_type_concept_id` constant:\n\n- `MedicationRequest__drug_exposure.sql` — prescription order. `drug_type_concept_id = 38000177` ('Prescription written'). RxNorm preferred, NDC fallback (inner JOIN on 'Maps to' → standard Drug, so an unmapped code yields NO row). `drug_exposure_start_date = end_date = authoredOn`; the `_datetime` pair is `authoredOn::timestamp`. `person_id ← subject`, `visit_occurrence_id ← encounter`, `provider_id ← requester`. Status filter drops `entered-in-error / cancelled / draft / unknown`.\n- `MedicationAdministration__drug_exposure.sql` — drug actually given. `drug_type_concept_id = 38000179` (vocab name in this bundle: 'Physician administered drug (identified as procedure)'). RxNorm > NDC > SNOMED (inner JOIN to standard Drug). `start = end = effectiveDateTime`. `person_id ← subject`, `visit_occurrence_id ← context` (R4 'context'). NO provider mapped → `provider_id` NULL. Status filter (NULL treated as 'completed') drops `entered-in-error / not-done / unknown`.\n- `Immunization__drug_exposure.sql` — point-in-time vaccination. `drug_type_concept_id = 32827` ('EHR encounter record'). CVX preferred, RxNorm fallback. Uses a **LEFT JOIN** to 'Maps to', so a CVX code with no crosswalk still produces a row with `drug_concept_id = 0` while `drug_source_concept_id` keeps the CVX source concept. `start = end = occurrenceDateTime`. `person_id ← patient`, `visit_occurrence_id ← encounter`. NO provider. Status filter drops `entered-in-error / not-done`.\n\nGrounding notes from the live May-2026 Athena bundle:\n- RxNorm 896209 → standard Drug 40169281 (self-map). RxNorm 1665060 (cefazolin 2000 MG Injection) → 46287345 (self-map). RxNorm 797752 (hepatitis B surface antigen vaccine) → 528323 (self-map). All three are vocabulary_id='RxNorm', domain_id='Drug', standard 'S', and 'Maps to' themselves.\n- The CVX vocabulary is the real OHDSI CVX (Athena bundle 2026-07-07, ~288 concepts with normal concept_ids ~4021xxxx; many are Standard 'S' Drug concepts that 'Maps to' themselves). CVX 08 = 40213304 ('hepatitis B vaccine, pediatric…', Standard, self-map), so variant (f) (CVX+RxNorm, CVX wins prio) resolves to 40213304 from the CVX coding. The only unmapped CVX is code 99 'RESERVED - do not use' (40213262, non-standard, no 'Maps to') → variant (d) uses it to exercise the LEFT-JOIN zero-fallback (drug_concept_id 0, drug_source_concept_id = the CVX source concept 40213262). Variant (c) still exercises the RxNorm fallback path via an Immunization carrying only an RxNorm coding.\n- Datetime casts: stage-2 uses `::timestamp` on the FHIR dateTime string with a `+00:00` offset, which Postgres truncates to wall-clock (e.g. '2023-12-07T18:39:19+00:00'::timestamp = '2023-12-07 18:39:19') — NO UTC shift (unlike Procedure). Confirmed against the actual cdm_ours_fhir.drug_exposure row for Synthea MedicationAdministration 18071d58-3d43-cb2e-15ff-b72638e1b241.\n\nEvery non-NULL drug_exposure column is asserted; the columns the stage-2 SELECTs hard-code to NULL (verbatim_end_date, stop_reason, refills, quantity, days_supply, sig, route_concept_id, lot_number, visit_detail_id, route_source_value, dose_unit_source_value) are omitted and therefore asserted NULL. drug_exposure is the ONLY target table for this branch; an `omop:{}` case asserts zero rows everywhere.",
   "cases": [
     {
       "desc": "(c) Immunization RxNorm fallback that crosswalks to standard Drug → drug_concept_id non-zero (type 32827)",
@@ -100,12 +100,12 @@
             "reference": "Encounter/enc-2"
           },
           "vaccineCode": {
-            "text": "Hep B, adolescent or pediatric",
+            "text": "Unmapped vaccine code",
             "coding": [
               {
                 "system": "http://hl7.org/fhir/sid/cvx",
-                "code": "08",
-                "display": "Hep B, adolescent or pediatric"
+                "code": "99",
+                "display": "RESERVED - do not use"
               }
             ]
           },
@@ -125,9 +125,9 @@
             "drug_type_concept_id": 32827,
             "drug_type_concept_id__name": "EHR encounter record",
             "visit_occurrence_id": "ref:enc-2",
-            "drug_source_value": "08",
-            "drug_source_concept_id": 2000000029,
-            "drug_source_concept_id__name": "hepatitis B vaccine, pediatric or pediatric/adolescent dosage"
+            "drug_source_value": "99",
+            "drug_source_concept_id": 40213262,
+            "drug_source_concept_id__name": "RESERVED - do not use"
           }
         ]
       }
@@ -165,7 +165,7 @@
       "omop": {}
     },
     {
-      "desc": "(f) Immunization with BOTH CVX and RxNorm codings -> prio-1 CVX wins the DISTINCT ON/ORDER BY prio; CVX has no crosswalk so drug_concept_id 0 even though the RxNorm coding would crosswalk to 528323 (proves CVX precedence, not just CVX-only)",
+      "desc": "(f) Immunization with BOTH CVX and RxNorm codings -> prio-1 CVX wins the DISTINCT ON/ORDER BY prio; CVX 08 is itself a Standard Drug concept (40213304, self-map) so drug_concept_id = 40213304 from the CVX coding, NOT the RxNorm 797752 → 528323 the fallback would give (proves CVX precedence resolves to the CVX concept, not RxNorm)",
       "fhir": [
         {
           "resourceType": "Patient",
@@ -218,8 +218,8 @@
         "drug_exposure": [
           {
             "person_id": "ref:patient-4",
-            "drug_concept_id": 0,
-            "drug_concept_id__name": "No matching concept (CVX wins prio, no crosswalk)",
+            "drug_concept_id": 40213304,
+            "drug_concept_id__name": "hepatitis B vaccine, pediatric or pediatric/adolescent dosage",
             "drug_exposure_start_date": "2017-12-05",
             "drug_exposure_start_datetime": "2017-12-05T10:40:30",
             "drug_exposure_end_date": "2017-12-05",
@@ -228,7 +228,7 @@
             "drug_type_concept_id__name": "EHR encounter record",
             "visit_occurrence_id": "ref:enc-3",
             "drug_source_value": "08",
-            "drug_source_concept_id": 2000000029,
+            "drug_source_concept_id": 40213304,
             "drug_source_concept_id__name": "hepatitis B vaccine, pediatric or pediatric/adolescent dosage"
           }
         ]
