@@ -1,0 +1,310 @@
+{
+  "meta": {
+    "title": "F2O Connectathon 2026 - Expected Results Manifest",
+    "cdm_version": "5.4",
+    "vocabulary_version": "20260227",
+    "terminology_server": "https://fhir-terminology.ohdsi.org",
+    "ig_version": "{IG_VERSION_PINNED}",
+    "fhir_version": "R4 (base, unprofiled)",
+    "note": "Gold standard for the Workflow 1 reference run. concept_ids resolved against OHDSI vocab 20260227 via the WG terminology server."
+  },
+  "expected": [
+    {
+      "fixture": "condition/condition_p1_diabetes_snomed.json",
+      "omop_table": "condition_occurrence",
+      "expect": {
+        "condition_concept_id": "201820",
+        "condition_source_value": "73211009",
+        "condition_source_concept_id": "201820"
+      },
+      "note": "SNOMED 73211009 is standard; condition_concept_id and source_concept_id both 201820 (standard concept maps to itself).",
+      "statements": [
+        "f2o-031",
+        "f2o-033",
+        "f2o-037"
+      ]
+    },
+    {
+      "fixture": "condition/condition_p1_diabetes_icd10.json",
+      "omop_table": "condition_occurrence",
+      "expect": {
+        "condition_concept_id": "201826",
+        "condition_source_value": "E11.9",
+        "condition_source_concept_id": "35206882"
+      },
+      "note": "ICD10CM E11.9 is non-standard (NS); source_concept_id=35206882, Maps to standard 201826.",
+      "statements": [
+        "f2o-031",
+        "f2o-033"
+      ]
+    },
+    {
+      "fixture": "condition/condition_p1_hypertension_snomed.json",
+      "omop_table": "condition_occurrence",
+      "expect": {
+        "condition_concept_id": "316866",
+        "condition_source_value": "38341003"
+      },
+      "statements": [
+        "f2o-031",
+        "f2o-033"
+      ]
+    },
+    {
+      "fixture": "condition/condition_p3_asthma_snomed.json",
+      "omop_table": "condition_occurrence",
+      "expect": {
+        "condition_concept_id": "317009",
+        "condition_source_value": "195967001"
+      },
+      "statements": [
+        "f2o-031",
+        "f2o-033"
+      ]
+    },
+    {
+      "fixture": "condition/condition_p3_local_unmapped.json",
+      "omop_table": "condition_occurrence",
+      "expect": {
+        "condition_concept_id": "0",
+        "condition_source_value": "XLAB-001",
+        "condition_source_concept_id": "0"
+      },
+      "note": "Local code does not resolve; UNMAPPED fallback. concept_id MUST be 0, source_value preserved verbatim.",
+      "statements": [
+        "f2o-032",
+        "f2o-033"
+      ]
+    },
+    {
+      "fixture": "observation/observation_p1_heartrate.json",
+      "omop_table": "measurement",
+      "expect": {
+        "measurement_concept_id": "3027018",
+        "value_as_number": "72",
+        "unit_source_value": "/min"
+      },
+      "statements": [
+        "f2o-031",
+        "f2o-034",
+        "f2o-037"
+      ]
+    },
+    {
+      "fixture": "observation/observation_p1_bloodpressure_panel.json",
+      "omop_table": "measurement",
+      "expect": {
+        "panel_note": "BP panel splits into TWO measurement rows on the components",
+        "systolic_measurement_concept_id": "3004249",
+        "systolic_value_as_number": "128",
+        "diastolic_measurement_concept_id": "3012888",
+        "diastolic_value_as_number": "78",
+        "panel_concept_id": "36203185 (85354-9; may or may not be retained per ETL policy)"
+      },
+      "note": "Component-bearing BP. Transform must emit systolic (3004249) and diastolic (3012888) separately; this is a known FHIR-to-OMOP splitting point.",
+      "statements": [
+        "f2o-031",
+        "f2o-034",
+        "f2o-081"
+      ]
+    },
+    {
+      "fixture": "observation/observation_p1_sodium.json",
+      "omop_table": "measurement",
+      "expect": {
+        "measurement_concept_id": "3019550",
+        "value_as_number": "139",
+        "unit_source_value": "mmol/L"
+      },
+      "note": "Simple single-value lab; clean measurement with no magic-profile interaction.",
+      "statements": [
+        "f2o-031",
+        "f2o-034"
+      ]
+    },
+    {
+      "fixture": "observation/observation_p1_creatinine.json",
+      "omop_table": "measurement",
+      "expect": {
+        "measurement_concept_id": "3016723",
+        "value_as_number": "0.9",
+        "unit_source_value": "mg/dL"
+      },
+      "statements": [
+        "f2o-031",
+        "f2o-034"
+      ]
+    },
+    {
+      "fixture": "observation/observation_p2_heartrate.json",
+      "omop_table": "measurement",
+      "expect": {
+        "measurement_concept_id": "3027018",
+        "value_as_number": "68"
+      },
+      "statements": [
+        "f2o-031",
+        "f2o-037"
+      ]
+    },
+    {
+      "fixture": "procedure/procedure_p1_appendectomy.json",
+      "omop_table": "procedure_occurrence",
+      "expect": {
+        "procedure_concept_id": "4198190",
+        "procedure_source_value": "80146002"
+      },
+      "note": "domain_id=Procedure; routed by concept domain not resource type (f2o-037).",
+      "statements": [
+        "f2o-031",
+        "f2o-037",
+        "f2o-070",
+        "f2o-072"
+      ]
+    },
+    {
+      "fixture": "medicationrequest/medicationrequest_p1_metformin_active.json",
+      "omop_table": "drug_exposure",
+      "expect": {
+        "drug_concept_id": "40163924",
+        "drug_source_value": "860975"
+      },
+      "note": "status=active -> INCLUDED.",
+      "statements": [
+        "f2o-031",
+        "f2o-060"
+      ]
+    },
+    {
+      "fixture": "medicationstatement/medicationstatement_p2_metformin_patientreported.json",
+      "omop_table": "drug_exposure",
+      "expect": {
+        "drug_concept_id": "40163924",
+        "drug_type_concept_id": "<patient self-report type concept>"
+      },
+      "note": "informationSource=Patient -> distinct type concept (f2o-053).",
+      "statements": [
+        "f2o-053",
+        "f2o-031"
+      ]
+    },
+    {
+      "fixture": "immunization/immunization_p2_influenza_cvx.json",
+      "omop_table": "drug_exposure",
+      "expect": {
+        "drug_concept_id": "40213154",
+        "drug_source_value": "140"
+      },
+      "statements": [
+        "f2o-031",
+        "f2o-037"
+      ]
+    },
+    {
+      "fixture": "documentreference/documentreference_p3_progressnote.json",
+      "omop_table": "note",
+      "expect": {
+        "note_text": "<decoded residual content>"
+      },
+      "note": "Residual content routed to note table rather than discarded (f2o-081).",
+      "statements": [
+        "f2o-081"
+      ]
+    },
+    {
+      "fixture": "_negative/medicationrequest_p4_cancelled_NEG_f2o-060.json",
+      "omop_table": "drug_exposure",
+      "expect": {
+        "rows": "0"
+      },
+      "disposition": "EXCLUDED",
+      "note": "status=cancelled -> must NOT appear in drug_exposure.",
+      "statements": [
+        "f2o-060"
+      ]
+    },
+    {
+      "fixture": "_negative/procedure_p4_notdone_NEG_f2o-060.json",
+      "omop_table": "procedure_occurrence",
+      "expect": {
+        "rows": "0"
+      },
+      "disposition": "EXCLUDED",
+      "note": "status=not-done -> must NOT appear.",
+      "statements": [
+        "f2o-060"
+      ]
+    },
+    {
+      "fixture": "_negative/condition_p4_identifier_leak_NEG_f2o-020.json",
+      "omop_table": "condition_occurrence",
+      "expect": {
+        "condition_concept_id": "201820",
+        "condition_source_value": "73211009",
+        "MRN-7783914": "MUST NOT appear in any *_source_value or any OMOP field"
+      },
+      "disposition": "INCLUDED but identifier scrubbed",
+      "note": "Resource.identifier MRN must never reach source_value (f2o-020).",
+      "statements": [
+        "f2o-020"
+      ]
+    },
+    {
+      "fixture": "_negative/observation_p4_nodate_NEG_f2o-070.json",
+      "omop_table": "measurement",
+      "expect": {
+        "disposition": "EXCLUDED or imputed-with-documented-strategy"
+      },
+      "note": "Sodium lab (LOINC 2951-2) with category but NO effective[x]; valid FHIR. Transform must exclude or impute with documented strategy, never silently fabricate a date (f2o-070/071).",
+      "statements": [
+        "f2o-070",
+        "f2o-071"
+      ]
+    },
+    {
+      "fixture": "_negative/condition_p4_missing_subject_NEG_f2o-012.json",
+      "omop_table": "(none)",
+      "expect": {
+        "disposition": "REJECTED/QUARANTINED"
+      },
+      "note": "Invalid FHIR (no subject) -> must be rejected, disposition documented (f2o-012).",
+      "statements": [
+        "f2o-012"
+      ]
+    },
+    {
+      "fixture": "condition/condition_p3_asthma_specificity_f2o-036.json",
+      "omop_table": "condition_occurrence",
+      "expect": {
+        "condition_concept_id": "4191479",
+        "note": "two codes present; transform selects specific child Allergic asthma 4191479 over parent Asthma 317009"
+      },
+      "statements": [
+        "f2o-036"
+      ]
+    },
+    {
+      "fixture": "procedure/procedure_p3_custom_concept_f2o-039.json",
+      "omop_table": "procedure_occurrence",
+      "expect": {
+        "procedure_concept_id": "0",
+        "procedure_source_concept_id": ">= 2000000000",
+        "note": "local code -> custom concept per OMOP 2-billion convention"
+      },
+      "statements": [
+        "f2o-039"
+      ]
+    },
+    {
+      "fixture": "medicationrequest/medicationrequest_p1_complexdosing_f2o-080.json",
+      "omop_table": "drug_exposure",
+      "expect": {
+        "drug_concept_id": "40163924",
+        "note": "multi-step titrated dosing; granularity exceeds OMOP structured capacity -> documented data-loss point"
+      },
+      "statements": [
+        "f2o-080"
+      ]
+    }
+  ]
+}
