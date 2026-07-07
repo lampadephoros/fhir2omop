@@ -1,0 +1,34 @@
+{
+  "resourceType": "ViewDefinition",
+  "id": "omop-documentreference-note",
+  "url": "https://fhir2omop.health-samurai.io/ViewDefinition/omop-documentreference-note",
+  "name": "OmopDocumentReferenceNoteView",
+  "title": "DocumentReference → note (FHIR-flat, stage 1)",
+  "version": "0.1.0",
+  "status": "draft",
+  "experimental": true,
+  "extension": [
+    { "url": "https://fhir2omop.health-samurai.io/StructureDefinition/omop-target-table", "valueString": "note" },
+    { "url": "https://fhir2omop.health-samurai.io/StructureDefinition/omop-edge",        "valueString": "DocumentReference__note" }
+  ],
+  "resource": "DocumentReference",
+  "description": "DocumentReference.content.attachment.data (base64) → cdm.note. Residual/unstructured clinical content that has no structured OMOP home (f2o-081). One DocumentReference with a decodable text attachment → one note row.",
+  "constant": [
+    { "name": "loincSystem", "valueString": "http://loinc.org" }
+  ],
+  "select": [
+    {
+      "column": [
+        { "name": "id",            "path": "id",                                                                                "type": "id",           "description": "DocumentReference.id → hash → note_id." },
+        { "name": "status",        "path": "status",                                                                            "type": "code",         "description": "Stage-2 filters 'entered-in-error', 'superseded'." },
+        { "name": "subject_ref",   "path": "subject.getReferenceKey()",                                                          "type": "string",       "description": "Patient → person_id." },
+        { "name": "encounter_ref", "path": "context.encounter.first().getReferenceKey()",                                        "type": "string",       "description": "context.encounter → visit_occurrence_id; also the note_date fallback source." },
+        { "name": "author_practitioner_ref", "path": "author.where(reference.startsWith('Practitioner/')).first().getReferenceKey()", "type": "string",  "description": "First Practitioner-typed author → provider_id." },
+        { "name": "code_loinc",    "path": "type.coding.where(system=%loincSystem).code.first()",                                 "type": "code",         "description": "LOINC document type → note_class_concept_id." },
+        { "name": "code_text",     "path": "type.text",                                                                          "type": "string",       "description": "Document title." },
+        { "name": "doc_date",      "path": "date",                                                                               "type": "dateTime",     "description": "DocumentReference.date → note_date / _datetime (optional; falls back to Encounter.period.start)." },
+        { "name": "attachment_data", "path": "content.first().attachment.data",                                                  "type": "base64Binary", "description": "Base64-encoded note body." }
+      ]
+    }
+  ]
+}

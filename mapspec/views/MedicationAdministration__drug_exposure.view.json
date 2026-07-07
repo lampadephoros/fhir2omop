@@ -28,6 +28,7 @@
         { "name": "code_ndc",      "path": "medication.ofType(CodeableConcept).coding.where(system=%ndcSystem).code.first()",    "type": "code",     "description": "NDC fallback." },
         { "name": "code_snomed",   "path": "medication.ofType(CodeableConcept).coding.where(system=%snomedSystem).code.first()", "type": "code",     "description": "SNOMED last-resort." },
         { "name": "code_text",     "path": "medication.ofType(CodeableConcept).text",                                            "type": "string",   "description": "Drug label." },
+        { "name": "medication_ref", "path": "medication.ofType(Reference).getReferenceKey()",                                     "type": "string",   "description": "medicationReference → joined to staging.medication_drug_exposure in stage-2 to pull the referenced Medication's RxNorm/NDC." },
         { "name": "effective_dt",  "path": "effective.ofType(dateTime)",                                                         "type": "dateTime", "description": "effectiveDateTime → start_date/datetime." },
         { "name": "status_code",   "path": "status",                                                                             "type": "code",     "description": "completed / in-progress / stopped / entered-in-error." },
         { "name": "route_code",     "path": "dosage.route.coding.code.first()",                                                   "type": "code",     "description": "MedicationAdministration.dosage.route code → route_concept_id via cm.route_to_omop; raw code → route_source_value." }

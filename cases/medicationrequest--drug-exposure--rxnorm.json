@@ -284,6 +284,75 @@
         }
       ],
       "omop": {}
+    },
+    {
+      "desc": "(m) MedicationRequest carrying medicationREFERENCE (no inline CodeableConcept) → the codes CTE dereferences the referenced Medication via staging.medication_drug_exposure (the Medication stage-1 view) and resolves its RxNorm 896209 → 40169281; US-Core/MIMIC-style shape that previously produced ZERO drug_exposure rows",
+      "fhir": [
+        {
+          "resourceType": "Patient",
+          "id": "patient-9",
+          "gender": "female",
+          "birthDate": "1950-01-01"
+        },
+        {
+          "resourceType": "Practitioner",
+          "id": "prac-9",
+          "name": [ { "family": "Refdoc", "given": [ "Rita" ] } ]
+        },
+        {
+          "resourceType": "Encounter",
+          "id": "enc-9",
+          "status": "finished",
+          "class": { "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode", "code": "AMB" },
+          "subject": { "reference": "Patient/patient-9" },
+          "period": { "start": "2007-06-02T09:00:00+00:00", "end": "2007-06-02T10:00:00+00:00" }
+        },
+        {
+          "resourceType": "Medication",
+          "id": "med-9",
+          "code": {
+            "text": "60 ACTUAT Fluticasone propionate 0.25 MG/ACTUAT / salmeterol 0.05 MG/ACTUAT Dry Powder Inhaler",
+            "coding": [
+              {
+                "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+                "code": "896209",
+                "display": "60 ACTUAT Fluticasone propionate 0.25 MG/ACTUAT / salmeterol 0.05 MG/ACTUAT Dry Powder Inhaler"
+              }
+            ]
+          }
+        },
+        {
+          "resourceType": "MedicationRequest",
+          "id": "medreq-9",
+          "status": "active",
+          "intent": "order",
+          "subject": { "reference": "Patient/patient-9" },
+          "encounter": { "reference": "Encounter/enc-9" },
+          "requester": { "reference": "Practitioner/prac-9" },
+          "authoredOn": "2007-06-02T09:15:00+00:00",
+          "medicationReference": { "reference": "Medication/med-9" }
+        }
+      ],
+      "omop": {
+        "drug_exposure": [
+          {
+            "person_id": "ref:patient-9",
+            "drug_concept_id": 40169281,
+            "drug_concept_id__name": "60 ACTUAT fluticasone propionate 0.25 MG/ACTUAT / salmeterol 0.05 MG/ACTUAT Dry Powder Inhaler",
+            "drug_exposure_start_date": "2007-06-02",
+            "drug_exposure_start_datetime": "2007-06-02T09:15:00",
+            "drug_exposure_end_date": "2007-06-02",
+            "drug_exposure_end_datetime": "2007-06-02T09:15:00",
+            "drug_type_concept_id": 38000177,
+            "drug_type_concept_id__name": "Prescription written",
+            "provider_id": "ref:prac-9",
+            "visit_occurrence_id": "ref:enc-9",
+            "drug_source_value": "896209",
+            "drug_source_concept_id": 40169281,
+            "drug_source_concept_id__name": "60 ACTUAT fluticasone propionate 0.25 MG/ACTUAT / salmeterol 0.05 MG/ACTUAT Dry Powder Inhaler"
+          }
+        ]
+      }
     }
   ]
 }

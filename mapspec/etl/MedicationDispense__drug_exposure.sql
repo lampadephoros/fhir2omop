@@ -8,6 +8,12 @@ WITH codes AS (
     SELECT id AS staging_id, 1 AS prio, 'RxNorm' AS vocab, drug_rxnorm AS code FROM staging.medicationdispense_drug_exposure WHERE drug_rxnorm IS NOT NULL
     UNION ALL
     SELECT id,                2,         'NDC',             drug_ndc            FROM staging.medicationdispense_drug_exposure WHERE drug_ndc    IS NOT NULL
+    -- medicationReference → the referenced Medication's codes (see
+    -- MedicationRequest__drug_exposure.sql for the rationale).
+    UNION ALL
+    SELECT v.id,              3,         'RxNorm',          m.drug_rxnorm       FROM staging.medicationdispense_drug_exposure v JOIN staging.medication_drug_exposure m ON m.id = v.medication_ref WHERE m.drug_rxnorm IS NOT NULL
+    UNION ALL
+    SELECT v.id,              4,         'NDC',             m.drug_ndc          FROM staging.medicationdispense_drug_exposure v JOIN staging.medication_drug_exposure m ON m.id = v.medication_ref WHERE m.drug_ndc    IS NOT NULL
 ),
 resolved AS (
     SELECT DISTINCT ON (c.staging_id)

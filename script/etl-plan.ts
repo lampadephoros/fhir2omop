@@ -38,7 +38,13 @@ export const PLAN: Edge[] = [
     { edge: "Condition__observation",                 src: "fhir.condition",             staging: "staging.condition_occurrence",                 target: "cdm_ours_fhir.observation",          mode: "append" },
 
     { edge: "DiagnosticReport__note",                 src: "fhir.diagnostic_report",     staging: "staging.diagnosticreport_note",                target: "cdm_ours_fhir.note",                 mode: "truncate" },
+    { edge: "DocumentReference__note",                src: "fhir.document_reference",    staging: "staging.documentreference_note",               target: "cdm_ours_fhir.note",                 mode: "append" },
 
+    // Medication is a stub edge (stage-2 WHERE FALSE — a drug definition, not
+    // an exposure event) but its stage-1 view MUST materialize: the four
+    // Medication*__drug_exposure codes CTEs dereference medicationReference
+    // against staging.medication_drug_exposure.
+    { edge: "Medication__drug_exposure",              src: "fhir.medication",            staging: "staging.medication_drug_exposure",             target: "cdm_ours_fhir.drug_exposure",        mode: "append" },
     { edge: "MedicationRequest__drug_exposure",       src: "fhir.medication_request",    staging: "staging.medicationrequest_drug_exposure",      target: "cdm_ours_fhir.drug_exposure",        mode: "truncate" },
     { edge: "MedicationAdministration__drug_exposure",src: "fhir.medication_administration", staging: "staging.medicationadministration_drug_exposure", target: "cdm_ours_fhir.drug_exposure",   mode: "append" },
     { edge: "Immunization__drug_exposure",            src: "fhir.immunization",          staging: "staging.immunization_drug_exposure",           target: "cdm_ours_fhir.drug_exposure",        mode: "append" },

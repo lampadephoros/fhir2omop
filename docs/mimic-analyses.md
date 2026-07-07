@@ -82,10 +82,10 @@ MIMIC diagnoses **are real ICD** wrapped in MIMIC-local URLs. With two trivial b
 ### A. Genuinely ours — fix these
 | # | Table | Discrepancy | Fix |
 |---|---|---|---|
-| 1 | condition | `condition_start_date = NULL` (MIMIC has no date on Condition) | fall back to the linked **Encounter** date when `onset`/`recordedDate` absent |
-| 2 | drug_exposure | view can't read drug via `medicationReference` → 0 rows | add a staging join that **dereferences `medicationReference` → Medication** and reads its code |
+| 1 | condition | `condition_start_date = NULL` (MIMIC has no date on Condition) | **FIXED (2026-07-02):** `_resolve_condition.sql` falls back to `staging.encounter_visit.period_start` (the Encounter stage-1 view — no raw fhir.* reads); golden variant (s) |
+| 2 | drug_exposure | view can't read drug via `medicationReference` → 0 rows | **FIXED (2026-07-02):** all four `Medication*` views expose `medication_ref`; codes CTEs join `staging.medication_drug_exposure` (Medication stub edge added to the PLAN so its view materializes); golden variant (m) |
 | 3 | visit_occurrence | `admitted_from`/`discharged_to` `_concept_id` hardcoded 0 | LEFT JOIN a `cm.mimic_admit/discharge` map (`gcpt_vis_admission.csv`); strings already in `*_source_value` |
-| 4 | measurement | lab `measurement_type_concept_id` hardcoded `32817` | use `32856` (Lab result) for lab-origin measurements |
+| 4 | measurement | lab `measurement_type_concept_id` hardcoded `32817` | **FIXED (2026-07-02):** `category='laboratory'` → `32856` Lab (matches DiagnosticReport__measurement), else 32817 |
 | 5 | procedure/specimen/observation | stage-1 views filter **standard** system URLs only → extract nothing from MIMIC-local URLs | generalize views/ETLs to accept source-local CodeSystem URLs (a "dialect adapter") |
 | 6 | measurement | no-crosswalk itemids are **dropped** vs reference keeping `concept_id=0` | decide the OMOP convention (emit 0-concept rows vs drop) |
 

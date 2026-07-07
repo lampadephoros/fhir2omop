@@ -1,0 +1,12 @@
+-- Guard stub for the medicationReference dereference in the four
+-- Medication*__drug_exposure stage-2 codes CTEs: they JOIN
+-- staging.medication_drug_exposure (the Medication stage-1 ViewDefinition
+-- output — never raw fhir.* jsonb) to pull the referenced Medication's
+-- RxNorm/NDC when the request/administration/dispense/statement carries
+-- medicationReference instead of an inline medicationCodeableConcept.
+--
+-- When the source ships no Medication resources that view is never
+-- materialized; this stub keeps the stage-2 SQL valid (empty join → no
+-- ref-derived codes). The production orchestrator (etl-all.ts) materializes
+-- every view before the resolve passes, so there this is a no-op.
+CREATE TABLE IF NOT EXISTS staging.medication_drug_exposure (id text, drug_rxnorm text, drug_ndc text, code_text text);

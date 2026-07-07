@@ -15,6 +15,7 @@
 
 DROP TABLE IF EXISTS staging.observation_component_resolved;
 CREATE TABLE staging.observation_component_resolved AS
+WITH resolved AS (
 SELECT DISTINCT ON (v.id, v.component_code, std.concept_id)
     v.id,
     v.status,
@@ -57,7 +58,20 @@ LEFT JOIN vocab.concept unit
   ON unit.vocabulary_id = 'UCUM' AND unit.concept_code = v.component_unit_code AND unit.standard_concept = 'S'
 WHERE v.component_code IS NOT NULL
   AND COALESCE(v.status, 'final') NOT IN ('entered-in-error', 'cancelled', 'unknown')
-ORDER BY v.id, v.component_code, std.concept_id;
+ORDER BY v.id, v.component_code, std.concept_id
+)
+-- Specificity dedup (f2o-036), within the same component: drop an ancestor
+-- concept when the component also resolved to a more-specific descendant.
+SELECT r.* FROM resolved r
+WHERE NOT EXISTS (
+    SELECT 1 FROM resolved r2
+    JOIN vocab.concept_ancestor ca
+      ON ca.ancestor_concept_id   = r.std_concept_id
+     AND ca.descendant_concept_id = r2.std_concept_id
+    WHERE r2.id = r.id
+      AND r2.src_code = r.src_code
+      AND ca.ancestor_concept_id <> ca.descendant_concept_id
+);
 
 CREATE INDEX IF NOT EXISTS ix_observation_component_resolved_domain ON staging.observation_component_resolved (std_domain);
 ANALYZE staging.observation_component_resolved;

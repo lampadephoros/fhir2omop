@@ -92,7 +92,7 @@
             "condition_status_concept_id": 32893,
             "condition_status_concept_id__name": "Confirmed diagnosis",
             "visit_occurrence_id": "ref:enc-1",
-            "condition_source_value": "Essential hypertension (disorder)",
+            "condition_source_value": "59621000",
             "condition_source_concept_id": 320128,
             "condition_source_concept_id__name": "Essential hypertension",
             "condition_status_source_value": "active"
@@ -311,7 +311,7 @@
             "observation_type_concept_id": 32827,
             "observation_type_concept_id__name": "EHR encounter record",
             "visit_occurrence_id": "ref:enc-4",
-            "observation_source_value": "Medication review due (situation)",
+            "observation_source_value": "314529007",
             "observation_source_concept_id": 4199788,
             "observation_source_concept_id__name": "Medication review due"
           }
@@ -401,7 +401,7 @@
             "condition_status_concept_id": 32893,
             "condition_status_concept_id__name": "Confirmed diagnosis",
             "visit_occurrence_id": "ref:enc-5",
-            "condition_source_value": "Essential hypertension (disorder)",
+            "condition_source_value": "59621000",
             "condition_source_concept_id": 320128,
             "condition_source_concept_id__name": "Essential hypertension",
             "condition_status_source_value": "active"
@@ -482,7 +482,7 @@
             "condition_status_concept_id": 32906,
             "condition_status_concept_id__name": "Resolved condition",
             "visit_occurrence_id": "ref:enc-6",
-            "condition_source_value": "Essential hypertension (disorder)",
+            "condition_source_value": "59621000",
             "condition_source_concept_id": 320128,
             "condition_source_concept_id__name": "Essential hypertension",
             "condition_status_source_value": "resolved"
@@ -566,7 +566,7 @@
             "measurement_type_concept_id": 32827,
             "measurement_type_concept_id__name": "EHR encounter record",
             "visit_occurrence_id": "ref:enc-7",
-            "measurement_source_value": "Glutathione measurement",
+            "measurement_source_value": "468008",
             "measurement_source_concept_id": 4188222,
             "measurement_source_concept_id__name": "Glutathione measurement"
           }
@@ -649,7 +649,7 @@
             "procedure_type_concept_id": 32827,
             "procedure_type_concept_id__name": "EHR encounter record",
             "visit_occurrence_id": "ref:enc-8",
-            "procedure_source_value": "Excision of lesion of patella",
+            "procedure_source_value": "104001",
             "procedure_source_concept_id": 4016092,
             "procedure_source_concept_id__name": "Excision of lesion of patella"
           }
@@ -734,7 +734,7 @@
             "condition_status_concept_id": 32893,
             "condition_status_concept_id__name": "Confirmed diagnosis",
             "visit_occurrence_id": "ref:enc-9",
-            "condition_source_value": "Essential hypertension (disorder)",
+            "condition_source_value": "59621000",
             "condition_source_concept_id": 320128,
             "condition_source_concept_id__name": "Essential hypertension",
             "condition_status_source_value": "active"
@@ -809,7 +809,7 @@
             "condition_status_concept_id": 32893,
             "condition_status_concept_id__name": "Confirmed diagnosis",
             "visit_occurrence_id": "ref:enc-10",
-            "condition_source_value": "Essential hypertension (disorder)",
+            "condition_source_value": "59621000",
             "condition_source_concept_id": 320128,
             "condition_source_concept_id__name": "Essential hypertension",
             "condition_status_source_value": "active"
@@ -895,7 +895,7 @@
             "condition_status_concept_id": 32899,
             "condition_status_concept_id__name": "Preliminary diagnosis",
             "visit_occurrence_id": "ref:enc-11",
-            "condition_source_value": "Essential hypertension (disorder)",
+            "condition_source_value": "59621000",
             "condition_source_concept_id": 320128,
             "condition_source_concept_id__name": "Essential hypertension",
             "condition_status_source_value": "active"
@@ -981,7 +981,7 @@
             "condition_status_concept_id": 32906,
             "condition_status_concept_id__name": "Resolved condition",
             "visit_occurrence_id": "ref:enc-12",
-            "condition_source_value": "Essential hypertension (disorder)",
+            "condition_source_value": "59621000",
             "condition_source_concept_id": 320128,
             "condition_source_concept_id__name": "Essential hypertension",
             "condition_status_source_value": "resolved"
@@ -1069,7 +1069,7 @@
             "condition_status_concept_id": 32893,
             "condition_status_concept_id__name": "Confirmed diagnosis",
             "visit_occurrence_id": "ref:enc-13",
-            "condition_source_value": "Essential hypertension (disorder)",
+            "condition_source_value": "59621000",
             "condition_source_concept_id": 320128,
             "condition_source_concept_id__name": "Essential hypertension",
             "condition_status_source_value": "active"
@@ -1154,7 +1154,7 @@
             "condition_status_concept_id": 32893,
             "condition_status_concept_id__name": "Confirmed diagnosis",
             "visit_occurrence_id": "ref:enc-14",
-            "condition_source_value": "Essential hypertension (disorder)",
+            "condition_source_value": "59621000",
             "condition_source_concept_id": 320128,
             "condition_source_concept_id__name": "Essential hypertension",
             "condition_status_source_value": "active"
@@ -1246,7 +1246,7 @@
             "condition_status_concept_id": 32893,
             "condition_status_concept_id__name": "Confirmed diagnosis",
             "visit_occurrence_id": "ref:enc-15",
-            "condition_source_value": "Essential hypertension (disorder)",
+            "condition_source_value": "59621000",
             "condition_source_concept_id": 320128,
             "condition_source_concept_id__name": "Essential hypertension",
             "condition_status_source_value": "resolved"
@@ -1334,7 +1334,7 @@
             "condition_status_concept_id__name": "Confirmed diagnosis",
             "stop_reason": "Resolved after treat",
             "visit_occurrence_id": "ref:enc-16",
-            "condition_source_value": "Essential hypertension (disorder)",
+            "condition_source_value": "59621000",
             "condition_source_concept_id": 320128,
             "condition_source_concept_id__name": "Essential hypertension",
             "condition_status_source_value": "resolved"
@@ -1420,7 +1420,7 @@
             "condition_status_concept_id": 32893,
             "condition_status_concept_id__name": "Confirmed diagnosis",
             "visit_occurrence_id": "ref:enc-17",
-            "condition_source_value": "Essential (primary) hypertension",
+            "condition_source_value": "I10",
             "condition_source_concept_id": 35207668,
             "condition_source_concept_id__name": "Essential (primary) hypertension (ICD10CM)",
             "condition_status_source_value": "active"
@@ -1509,10 +1509,156 @@
             "condition_status_concept_id": 32893,
             "condition_status_concept_id__name": "Confirmed diagnosis",
             "visit_occurrence_id": "ref:enc-18",
-            "condition_source_value": "Essential hypertension (disorder)",
+            "condition_source_value": "59621000",
             "condition_source_concept_id": 320128,
             "condition_source_concept_id__name": "Essential hypertension",
             "condition_status_source_value": "resolved"
+          }
+        ]
+      }
+    },
+    {
+      "desc": "(s) Condition with NO onset/recordedDate but a linked Encounter → condition_start_date falls back to Encounter.period.start via staging.encounter_visit in the resolve pass (EHR-source shape, e.g. MIMIC, where the event date lives on the admission; Synthea always carries onset so this branch was never exercised)",
+      "fhir": [
+        {
+          "resourceType": "Encounter",
+          "id": "enc-19",
+          "status": "finished",
+          "class": { "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode", "code": "AMB" },
+          "subject": { "reference": "Patient/patient-1" },
+          "period": { "start": "2001-03-15T08:30:00+00:00", "end": "2001-03-20T12:00:00+00:00" }
+        },
+        {
+          "resourceType": "Condition",
+          "id": "cond-19",
+          "clinicalStatus": { "coding": [ { "system": "http://terminology.hl7.org/CodeSystem/condition-clinical", "code": "active" } ] },
+          "verificationStatus": { "coding": [ { "system": "http://terminology.hl7.org/CodeSystem/condition-ver-status", "code": "confirmed" } ] },
+          "category": [ { "coding": [ { "system": "http://terminology.hl7.org/CodeSystem/condition-category", "code": "encounter-diagnosis", "display": "Encounter Diagnosis" } ] } ],
+          "code": {
+            "text": "Essential hypertension (disorder)",
+            "coding": [ { "system": "http://snomed.info/sct", "code": "59621000", "display": "Essential hypertension (disorder)" } ]
+          },
+          "subject": { "reference": "Patient/patient-1" },
+          "encounter": { "reference": "Encounter/enc-19" }
+        }
+      ],
+      "omop": {
+        "condition_occurrence": [
+          {
+            "person_id": "ref:patient-1",
+            "condition_concept_id": 320128,
+            "condition_concept_id__name": "Essential hypertension",
+            "condition_start_date": "2001-03-15",
+            "condition_start_datetime": "2001-03-15T08:30:00",
+            "condition_type_concept_id": 32827,
+            "condition_type_concept_id__name": "EHR encounter record",
+            "condition_status_concept_id": 32893,
+            "condition_status_concept_id__name": "Confirmed diagnosis",
+            "visit_occurrence_id": "ref:enc-19",
+            "condition_source_value": "59621000",
+            "condition_source_concept_id": 320128,
+            "condition_source_concept_id__name": "Essential hypertension",
+            "condition_status_source_value": "active"
+          }
+        ]
+      }
+    },
+    {
+      "desc": "(t) Condition with a LOCAL unmapped code (unknown system, not in cm.fhir_system_to_omop_vocab, no vocab.concept match) → STILL emits a condition_occurrence row with condition_concept_id=0 and condition_source_concept_id=0 (f2o-032: populate concept_id=0 when no Standard mapping exists), source_value=raw code, routed to condition_occurrence by the resource-type default (f2o-037 secondary). Previously the INNER-JOIN resolve dropped it entirely (silent data loss).",
+      "fhir": [
+        {
+          "resourceType": "Condition",
+          "id": "cond-20",
+          "clinicalStatus": { "coding": [ { "system": "http://terminology.hl7.org/CodeSystem/condition-clinical", "code": "active" } ] },
+          "verificationStatus": { "coding": [ { "system": "http://terminology.hl7.org/CodeSystem/condition-ver-status", "code": "confirmed" } ] },
+          "category": [ { "coding": [ { "system": "http://terminology.hl7.org/CodeSystem/condition-category", "code": "encounter-diagnosis", "display": "Encounter Diagnosis" } ] } ],
+          "code": {
+            "text": "Local unmapped condition",
+            "coding": [ { "system": "http://institution.local/cond-codes", "code": "XLOC-42", "display": "Local unmapped condition" } ]
+          },
+          "subject": { "reference": "Patient/patient-1" },
+          "onsetDateTime": "2020-01-01"
+        }
+      ],
+      "omop": {
+        "condition_occurrence": [
+          {
+            "person_id": "ref:patient-1",
+            "condition_concept_id": 0,
+            "condition_start_date": "2020-01-01",
+            "condition_start_datetime": "2020-01-01T00:00:00",
+            "condition_type_concept_id": 32827,
+            "condition_type_concept_id__name": "EHR encounter record",
+            "condition_status_concept_id": 32893,
+            "condition_status_concept_id__name": "Confirmed diagnosis",
+            "condition_source_value": "XLOC-42",
+            "condition_source_concept_id": 0,
+            "condition_status_source_value": "active"
+          }
+        ]
+      }
+    },
+    {
+      "desc": "(u) Condition with NO subject (invalid FHIR, f2o-012) → filtered out (WHERE subject_ref IS NOT NULL), zero rows. MUST NOT abort the batch — every other variant in this file still loads. Regression guard for the all-or-nothing INSERT bug surfaced by the F2O Connectathon negative fixtures.",
+      "fhir": [
+        {
+          "resourceType": "Condition",
+          "id": "cond-21",
+          "clinicalStatus": { "coding": [ { "system": "http://terminology.hl7.org/CodeSystem/condition-clinical", "code": "active" } ] },
+          "code": { "coding": [ { "system": "http://snomed.info/sct", "code": "59621000", "display": "Essential hypertension (disorder)" } ] },
+          "onsetDateTime": "2020-02-02"
+        }
+      ],
+      "omop": {}
+    },
+    {
+      "desc": "(v) Condition with a resolvable SNOMED code but NO onset/recordedDate and no linked Encounter → no event date → filtered (condition_start_date is NOT NULL in v5.4), zero rows (f2o-070: no silent date). MUST NOT abort the batch.",
+      "fhir": [
+        {
+          "resourceType": "Condition",
+          "id": "cond-22",
+          "clinicalStatus": { "coding": [ { "system": "http://terminology.hl7.org/CodeSystem/condition-clinical", "code": "active" } ] },
+          "verificationStatus": { "coding": [ { "system": "http://terminology.hl7.org/CodeSystem/condition-ver-status", "code": "confirmed" } ] },
+          "code": { "coding": [ { "system": "http://snomed.info/sct", "code": "59621000", "display": "Essential hypertension (disorder)" } ] },
+          "subject": { "reference": "Patient/patient-1" }
+        }
+      ],
+      "omop": {}
+    },
+    {
+      "desc": "(w) Condition with TWO SNOMED codings — parent 195967001 'Asthma' (→ Standard 317009) and child 389145006 'Allergic asthma' (→ Standard 4191479, a descendant of 317009 in concept_ancestor) → ONE condition_occurrence, the more-specific child 4191479 (f2o-036). The parent 317009 row is dropped by specificity-dedup so the same clinical condition isn't double-counted. source_value/source_concept_id come from the surviving (child) coding.",
+      "fhir": [
+        {
+          "resourceType": "Condition",
+          "id": "cond-23",
+          "clinicalStatus": { "coding": [ { "system": "http://terminology.hl7.org/CodeSystem/condition-clinical", "code": "active" } ] },
+          "verificationStatus": { "coding": [ { "system": "http://terminology.hl7.org/CodeSystem/condition-ver-status", "code": "confirmed" } ] },
+          "code": {
+            "text": "Allergic asthma",
+            "coding": [
+              { "system": "http://snomed.info/sct", "code": "195967001", "display": "Asthma" },
+              { "system": "http://snomed.info/sct", "code": "389145006", "display": "Allergic asthma" }
+            ]
+          },
+          "subject": { "reference": "Patient/patient-1" },
+          "onsetDateTime": "2021-03-03"
+        }
+      ],
+      "omop": {
+        "condition_occurrence": [
+          {
+            "person_id": "ref:patient-1",
+            "condition_concept_id": 4191479,
+            "condition_concept_id__name": "Allergic asthma",
+            "condition_start_date": "2021-03-03",
+            "condition_start_datetime": "2021-03-03T00:00:00",
+            "condition_type_concept_id": 32817,
+            "condition_type_concept_id__name": "EHR",
+            "condition_status_concept_id": 32893,
+            "condition_status_concept_id__name": "Confirmed diagnosis",
+            "condition_source_value": "389145006",
+            "condition_source_concept_id": 4191479,
+            "condition_status_source_value": "active"
           }
         ]
       }

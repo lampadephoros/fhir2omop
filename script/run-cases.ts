@@ -124,9 +124,15 @@ async function runPipeline(present: Set<string>, slug: string, expectedTables: S
             : runTargets.has(tbl(p.target)));              // else only expected + primary targets
     if (!edges.length) return new Set();
 
-    // 1. materialize staging (canonical max-column view per staging table)
+    // 1. materialize staging (canonical max-column view per staging table).
+    // Materialize for EVERY resource present in the case — not just the
+    // expected-target edges — mirroring the production orchestrator
+    // (etl-all.ts materializes all views before resolves). Resolve passes may
+    // read sibling staging tables (e.g. _resolve_condition.sql falls back to
+    // staging.encounter_visit for the condition date), so those must exist
+    // whenever the case ships the source resource.
     const best = new Map<string, { edge: string; src: string; cols: number }>();
-    for (const p of edges) {
+    for (const p of PLAN.filter((p) => present.has(tbl(p.src)))) {
         const vf = `mapspec/views/${p.edge}.view.json`;
         if (!(await Bun.file(vf).exists())) continue;
         const cols = colCount(JSON.parse(await Bun.file(vf).text()));
@@ -145,7 +151,7 @@ async function runPipeline(present: Set<string>, slug: string, expectedTables: S
 
     // 2. resolve passes (skip silently when their input staging is absent)
     for (const f of resolveFiles) {
-        try { await runScript(subSchemas(await Bun.file(`mapspec/etl/${f}`).text())); } catch { /* resource not in this case */ }
+        try { await runScript(subSchemas(await Bun.file(`mapspec/etl/${f}`).text())); } catch (e: any) { if (verbose) console.log(`    [resolve ${f}] ${e.message}`); }
     }
 
     // 3. stage-2 edges → t_cdm (truncate first writer per target, then append)
@@ -308,9 +314,18 @@ async function dumpSeed(ids: Set<string>) {
         valid_start_date::text c4, valid_end_date::text c5, invalid_reason c6
         FROM vocab.concept_relationship WHERE relationship_id = 'Maps to' AND invalid_reason IS NULL
         AND concept_id_1 IN (${idList}) AND concept_id_2 IN (${idList}) ORDER BY concept_id_1, concept_id_2`);
+    // Proper-ancestor pairs within the seed set — needed by the specificity
+    // dedup (f2o-036) in the _resolve_*.sql passes (drop a concept when a
+    // more-specific descendant of it is also resolved for the same resource).
+    const anc = await sql.unsafe(`SELECT ancestor_concept_id::text c1, descendant_concept_id::text c2,
+        min_levels_of_separation::text c3, max_levels_of_separation::text c4
+        FROM vocab.concept_ancestor
+        WHERE ancestor_concept_id <> descendant_concept_id
+        AND ancestor_concept_id IN (${idList}) AND descendant_concept_id IN (${idList})
+        ORDER BY ancestor_concept_id, descendant_concept_id`);
     let out = `-- Minimal vocab subset for the FHIR->OMOP golden test cases (cases/*.json).
 -- Generated: DUMP_SEED=1 bun script/run-cases.ts   (do not edit by hand)
--- ${concepts.length} concepts, ${rels.length} 'Maps to' relationships.
+-- ${concepts.length} concepts, ${rels.length} 'Maps to' relationships, ${anc.length} ancestor pairs.
 -- Lets the cases run without the full ~928MB Athena bundle: load this into a
 -- fresh Postgres 'vocab' schema, build cm.* from mapspec/profiles/*.cm.json,
 -- then run the cases. See cases/README.md.
@@ -318,12 +333,14 @@ async function dumpSeed(ids: Set<string>) {
 CREATE SCHEMA IF NOT EXISTS vocab;
 CREATE TABLE IF NOT EXISTS vocab.concept (concept_id integer PRIMARY KEY, concept_name text, domain_id text, vocabulary_id text, concept_class_id text, standard_concept text, concept_code text, valid_start_date date, valid_end_date date, invalid_reason text);
 CREATE TABLE IF NOT EXISTS vocab.concept_relationship (concept_id_1 integer, concept_id_2 integer, relationship_id text, valid_start_date date, valid_end_date date, invalid_reason text);
-TRUNCATE vocab.concept, vocab.concept_relationship;
+CREATE TABLE IF NOT EXISTS vocab.concept_ancestor (ancestor_concept_id integer, descendant_concept_id integer, min_levels_of_separation integer, max_levels_of_separation integer);
+TRUNCATE vocab.concept, vocab.concept_relationship, vocab.concept_ancestor;
 `;
     for (const c of concepts) out += `INSERT INTO vocab.concept VALUES (${[c.c1, c.c2, c.c3, c.c4, c.c5, c.c6, c.c7, c.c8, c.c9, c.c10].map(lit).join(", ")});\n`;
     for (const r of rels) out += `INSERT INTO vocab.concept_relationship VALUES (${[r.c1, r.c2, r.c3, r.c4, r.c5, r.c6].map(lit).join(", ")});\n`;
+    for (const a of anc) out += `INSERT INTO vocab.concept_ancestor VALUES (${[a.c1, a.c2, a.c3, a.c4].map(lit).join(", ")});\n`;
     await Bun.write("cases/_vocab_seed.sql", out);
-    console.log(`\nwrote cases/_vocab_seed.sql — ${concepts.length} concepts, ${rels.length} relationships`);
+    console.log(`\nwrote cases/_vocab_seed.sql — ${concepts.length} concepts, ${rels.length} relationships, ${anc.length} ancestor pairs`);
 }
 
 // ── main ───────────────────────────────────────────────────────────────────

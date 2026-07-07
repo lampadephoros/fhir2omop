@@ -1,0 +1,76 @@
+{
+  "title": "DocumentReference → note",
+  "notes": "DocumentReference carries unstructured/residual clinical content (a progress note, discharge summary, …) that has no structured OMOP home. Per f2o-081 it is routed to the `note` table rather than discarded. One DocumentReference with a text attachment → one note row.\n\nStage 1 (`mapspec/views/DocumentReference__note.view.json`) flattens: `type.coding[LOINC]` → note_class_concept_id, `content.first().attachment.data` (base64) → note_text, `subject` → person_id, `context.encounter.first()` → visit, `date` → note_date, `author[Practitioner]` → provider. Stage 2 (`mapspec/etl/DocumentReference__note.sql`) base64-decodes the attachment, resolves the LOINC document-type to a Standard concept (LEFT JOIN, 0 if none), and — because DocumentReference.date is optional while note_date is NOT NULL in v5.4 — falls back to the linked Encounter.period.start via staging.encounter_visit (same cross-resource date pattern as Condition). note_type_concept_id 32817 'EHR', encoding 32678 'UTF-8', language 4180186 'English'. Status filter drops entered-in-error/superseded. A DocumentReference with no decodable text and no date is dropped (no silent empty note).",
+  "cases": [
+    {
+      "desc": "(a) their F2O connectathon shape: DocumentReference with LOINC 11506-3 'Progress note', a text/plain base64 attachment, subject + context.encounter but NO date → one note row; note_text = base64-decoded content, note_date falls back to Encounter.period.start (f2o-081 residual-content routing)",
+      "fhir": [
+        {
+          "resourceType": "Patient",
+          "id": "patient-1",
+          "gender": "female",
+          "birthDate": "1980-01-01"
+        },
+        {
+          "resourceType": "Encounter",
+          "id": "enc-1",
+          "status": "finished",
+          "class": { "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode", "code": "AMB" },
+          "subject": { "reference": "Patient/patient-1" },
+          "period": { "start": "2018-04-10T09:00:00+00:00", "end": "2018-04-10T09:30:00+00:00" }
+        },
+        {
+          "resourceType": "DocumentReference",
+          "id": "docref-1",
+          "status": "current",
+          "type": {
+            "coding": [ { "system": "http://loinc.org", "code": "11506-3", "display": "Progress note" } ]
+          },
+          "subject": { "reference": "Patient/patient-1" },
+          "content": [
+            {
+              "attachment": {
+                "contentType": "text/plain",
+                "data": "UGF0aWVudCByZXBvcnRzIGltcHJvdmVkIGJyZWF0aGluZyBzaW5jZSBzdGFydGluZyBpbmhhbGVyLg=="
+              }
+            }
+          ],
+          "context": { "encounter": [ { "reference": "Encounter/enc-1" } ] }
+        }
+      ],
+      "omop": {
+        "note": [
+          {
+            "person_id": "ref:patient-1",
+            "note_date": "2018-04-10",
+            "note_datetime": "2018-04-10T09:00:00",
+            "note_type_concept_id": 32817,
+            "note_type_concept_id__name": "EHR",
+            "note_class_concept_id": 3000735,
+            "note_class_concept_id__name": "Progress note",
+            "note_text": "Patient reports improved breathing since starting inhaler.",
+            "encoding_concept_id": 32678,
+            "language_concept_id": 4180186,
+            "visit_occurrence_id": "ref:enc-1",
+            "note_source_value": "11506-3"
+          }
+        ]
+      }
+    },
+    {
+      "desc": "(b) DocumentReference status='entered-in-error' → filtered, zero rows",
+      "fhir": [
+        {
+          "resourceType": "DocumentReference",
+          "id": "docref-2",
+          "status": "entered-in-error",
+          "type": { "coding": [ { "system": "http://loinc.org", "code": "11506-3", "display": "Progress note" } ] },
+          "subject": { "reference": "Patient/patient-1" },
+          "content": [ { "attachment": { "contentType": "text/plain", "data": "aWdub3JlZA==" } } ],
+          "date": "2018-04-10T09:00:00+00:00"
+        }
+      ],
+      "omop": {}
+    }
+  ]
+}

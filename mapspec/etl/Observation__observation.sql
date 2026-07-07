@@ -39,4 +39,8 @@ SELECT
 
 FROM staging.observation_resolved r
 WHERE r.std_domain = 'Observation'
+  -- Drop rows that can't satisfy NOT NULL person_id / observation_date rather
+  -- than aborting the whole INSERT (f2o-012 no-subject, f2o-070 no-date).
+  AND r.subject_id IS NOT NULL
+  AND COALESCE(r.effective_dt, r.effective_period_start) IS NOT NULL
 ;

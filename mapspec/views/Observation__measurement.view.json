@@ -23,6 +23,7 @@
         { "name": "performer_id",  "path": "performer.first().getReferenceKey()",  "type": "string",   "description": "First performer reference → provider_id." },
 
         { "name": "code_text",     "path": "code.text",                            "type": "string",   "description": "Free-text label → fallback *_source_value when no coding resolves." },
+        { "name": "category_code",  "path": "category.coding.code.first()",         "type": "code",     "description": "observation-category (laboratory / vital-signs / …) → lab-aware measurement_type_concept_id (32856 Lab vs 32817 EHR)." },
 
         { "name": "effective_dt",            "path": "effective.ofType(dateTime)",     "type": "dateTime", "description": "effectiveDateTime → *_date / *_datetime." },
         { "name": "effective_period_start",  "path": "effective.ofType(Period).start", "type": "dateTime", "description": "effectivePeriod.start fallback." },

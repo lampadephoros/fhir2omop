@@ -25,6 +25,7 @@
         { "name": "encounter_ref",  "path": "context.getReferenceKey()",                                                          "type": "string" },
         { "name": "drug_rxnorm",    "path": "medication.ofType(CodeableConcept).coding.where(system=%rxnormSystem).code.first()", "type": "code" },
         { "name": "drug_ndc",       "path": "medication.ofType(CodeableConcept).coding.where(system=%ndcSystem).code.first()",    "type": "code" },
+        { "name": "medication_ref", "path": "medication.ofType(Reference).getReferenceKey()",                                      "type": "string" },
         { "name": "dispense_dt",    "path": "whenHandedOver",                                                                     "type": "dateTime" },
         { "name": "quantity_value", "path": "quantity.value",                                                                     "type": "decimal" },
         { "name": "days_supply",    "path": "daysSupply.value",                                                                   "type": "integer" },

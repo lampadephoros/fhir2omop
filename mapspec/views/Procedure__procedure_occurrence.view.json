@@ -31,6 +31,7 @@
         { "name": "code_hcpcs",          "path": "code.coding.where(system=%hcpcsSystem).code.first()",      "type": "code",     "description": "HCPCS — fallback." },
         { "name": "code_icd10pcs",       "path": "code.coding.where(system=%icd10pcsSystem).code.first()",   "type": "code",     "description": "ICD-10-PCS — fallback." },
         { "name": "code_text",           "path": "code.text",                                                "type": "string",   "description": "Human-readable label." },
+        { "name": "code_any",            "path": "code.coding.first().code",                                 "type": "code",     "description": "First coding's raw code regardless of system — used as procedure_source_value when the code is in no known/loaded vocab (local/unmapped), so an unmapped Procedure still emits a concept_id=0 row (f2o-032) instead of being dropped." },
         { "name": "performed_dt",        "path": "performed.ofType(dateTime)",                               "type": "dateTime", "description": "performedDateTime branch." },
         { "name": "performed_period_start", "path": "performed.ofType(Period).start",                        "type": "dateTime", "description": "performedPeriod.start." },
         { "name": "performed_period_end",   "path": "performed.ofType(Period).end",                          "type": "dateTime", "description": "performedPeriod.end → procedure_end_date." },

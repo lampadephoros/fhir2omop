@@ -565,6 +565,36 @@
           }
         ]
       }
+    },
+    {
+      "desc": "(j) Procedure with a LOCAL unmapped code (unknown system, resolves to NO standard concept in any vocab) → NOT dropped: emits one procedure_occurrence with procedure_concept_id=0 and procedure_source_concept_id=0 (f2o-032), procedure_source_value = the raw local code. Distinct from variant (c), where the code DOES resolve but to a non-Procedure domain and is correctly dropped. (f2o-039's 2-billion custom-concept minting is a vocabulary-management step, out of transform scope, so source_concept_id is 0 here, not >= 2e9.)",
+      "fhir": [
+        {
+          "resourceType": "Procedure",
+          "id": "proc-10",
+          "status": "completed",
+          "code": {
+            "text": "Local institutional procedure",
+            "coding": [ { "system": "http://institution.local/proc-codes", "code": "INST-PROC-558", "display": "Local institutional procedure" } ]
+          },
+          "subject": { "reference": "Patient/patient-1" },
+          "performedDateTime": "2019-06-15T10:00:00+00:00"
+        }
+      ],
+      "omop": {
+        "procedure_occurrence": [
+          {
+            "person_id": "ref:patient-1",
+            "procedure_concept_id": 0,
+            "procedure_date": "2019-06-15",
+            "procedure_datetime": "2019-06-15T10:00:00",
+            "procedure_type_concept_id": 32827,
+            "procedure_type_concept_id__name": "EHR encounter record",
+            "procedure_source_value": "INST-PROC-558",
+            "procedure_source_concept_id": 0
+          }
+        ]
+      }
     }
   ]
 }

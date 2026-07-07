@@ -12,6 +12,13 @@ WITH codes AS (
     SELECT id AS staging_id, 1 AS prio, 'RxNorm' AS vocab, code_rxnorm AS code FROM staging.medicationrequest_drug_exposure WHERE code_rxnorm IS NOT NULL
     UNION ALL
     SELECT id,                2,         'NDC',             code_ndc            FROM staging.medicationrequest_drug_exposure WHERE code_ndc    IS NOT NULL
+    -- medicationReference → the referenced Medication's codes, via the
+    -- Medication stage-1 view (staging.medication_drug_exposure). medication[x]
+    -- is a choice, so these never compete with the inline branches above.
+    UNION ALL
+    SELECT v.id,              3,         'RxNorm',          m.drug_rxnorm       FROM staging.medicationrequest_drug_exposure v JOIN staging.medication_drug_exposure m ON m.id = v.medication_ref WHERE m.drug_rxnorm IS NOT NULL
+    UNION ALL
+    SELECT v.id,              4,         'NDC',             m.drug_ndc          FROM staging.medicationrequest_drug_exposure v JOIN staging.medication_drug_exposure m ON m.id = v.medication_ref WHERE m.drug_ndc    IS NOT NULL
 ),
 resolved AS (
     SELECT DISTINCT ON (c.staging_id)

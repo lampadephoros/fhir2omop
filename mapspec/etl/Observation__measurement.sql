@@ -21,7 +21,7 @@ SELECT
     COALESCE(r.effective_dt, r.effective_period_start)::timestamp           AS measurement_datetime,
     NULL::varchar                                                           AS measurement_time,
 
-    32817                                                                   AS measurement_type_concept_id,
+    CASE WHEN r.category_code = 'laboratory' THEN 32856 ELSE 32817 END       AS measurement_type_concept_id,
     r.operator_concept_id                                                   AS operator_concept_id,
     r.value_number                                                          AS value_as_number,
     r.value_as_concept_id                                                   AS value_as_concept_id,
@@ -43,4 +43,8 @@ SELECT
 
 FROM staging.observation_resolved r
 WHERE r.std_domain = 'Measurement'
+  -- Drop rows that can't satisfy NOT NULL person_id / measurement_date rather
+  -- than aborting the whole INSERT (f2o-012 no-subject, f2o-070 no-date).
+  AND r.subject_id IS NOT NULL
+  AND COALESCE(r.effective_dt, r.effective_period_start) IS NOT NULL
 ;

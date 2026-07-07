@@ -21,6 +21,7 @@
 
 DROP TABLE IF EXISTS staging.observation_resolved;
 CREATE TABLE staging.observation_resolved AS
+WITH resolved AS (
 SELECT DISTINCT ON (v.id, std.concept_id)
     v.id,
     v.status,
@@ -31,6 +32,7 @@ SELECT DISTINCT ON (v.id, std.concept_id)
     v.qualifier_code,
     v.range_low, v.range_high,
     v.code_text,
+    v.category_code,
     v.code_value           AS src_code,
     src.concept_id         AS src_concept_id,
     std.concept_id         AS std_concept_id,
@@ -76,7 +78,20 @@ ORDER BY v.id, std.concept_id,
              WHEN 'http://loinc.org'        THEN 1
              WHEN 'http://snomed.info/sct'  THEN 2
              ELSE 9
-         END;
+         END
+)
+-- Specificity dedup (f2o-036): drop a resolved concept when the same
+-- Observation also resolved to a more-specific descendant of it, so the same
+-- clinical fact isn't double-counted. Keeps only the most-specific concept(s).
+SELECT r.* FROM resolved r
+WHERE NOT EXISTS (
+    SELECT 1 FROM resolved r2
+    JOIN vocab.concept_ancestor ca
+      ON ca.ancestor_concept_id   = r.std_concept_id
+     AND ca.descendant_concept_id = r2.std_concept_id
+    WHERE r2.id = r.id
+      AND ca.ancestor_concept_id <> ca.descendant_concept_id
+);
 
 CREATE INDEX IF NOT EXISTS ix_observation_resolved_domain ON staging.observation_resolved (std_domain);
 ANALYZE staging.observation_resolved;

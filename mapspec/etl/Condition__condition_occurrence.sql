@@ -27,8 +27,8 @@ SELECT
     referenceToId(r.subject_ref)                                             AS person_id,
     r.std_concept_id                                                         AS condition_concept_id,
 
-    COALESCE(r.onset_dt, r.onset_period_start, r.recorded_date)::date        AS condition_start_date,
-    COALESCE(r.onset_dt, r.onset_period_start, r.recorded_date)::timestamp   AS condition_start_datetime,
+    COALESCE(r.onset_dt, r.onset_period_start, r.recorded_date, r.encounter_start_dt)::date      AS condition_start_date,
+    COALESCE(r.onset_dt, r.onset_period_start, r.recorded_date, r.encounter_start_dt)::timestamp AS condition_start_datetime,
     COALESCE(r.abatement_dt, r.abatement_period_end)::date                   AS condition_end_date,
     COALESCE(r.abatement_dt, r.abatement_period_end)::timestamp              AS condition_end_datetime,
 
@@ -40,7 +40,7 @@ SELECT
     referenceToId(r.encounter_ref)                                           AS visit_occurrence_id,
     NULL::bigint                                                             AS visit_detail_id,
 
-    left(COALESCE(r.code_display, r.src_code, r.code_text), 50)              AS condition_source_value,
+    left(COALESCE(r.src_code, r.code_text), 50)                             AS condition_source_value,
     r.src_concept_id                                                         AS condition_source_concept_id,
     left(r.clinical_status_code, 50)                                         AS condition_status_source_value
 
@@ -50,4 +50,10 @@ LEFT JOIN cm.fhir_verification_status_to_omop vstat ON vstat.source_code = r.ver
 LEFT JOIN cm.fhir_condition_category_to_omop  cat   ON cat.source_code   = r.category_code
 WHERE r.std_domain = 'Condition'
   AND COALESCE(r.verification_status_code, 'confirmed') NOT IN ('refuted', 'entered-in-error')
+  -- Drop resources that can't produce a valid OMOP row (NOT NULL person_id /
+  -- condition_start_date) instead of aborting the whole INSERT: a subject-less
+  -- Condition is invalid FHIR (f2o-012); a dateless one has no event date
+  -- (f2o-070). Filtered out here rather than silently imputed.
+  AND r.subject_ref IS NOT NULL
+  AND COALESCE(r.onset_dt, r.onset_period_start, r.recorded_date, r.encounter_start_dt) IS NOT NULL
 ;

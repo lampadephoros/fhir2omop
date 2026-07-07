@@ -25,6 +25,7 @@
         { "name": "encounter_ref", "path": "context.getReferenceKey()",                                                          "type": "string" },
         { "name": "drug_rxnorm",   "path": "medication.ofType(CodeableConcept).coding.where(system=%rxnormSystem).code.first()", "type": "code" },
         { "name": "drug_ndc",      "path": "medication.ofType(CodeableConcept).coding.where(system=%ndcSystem).code.first()",    "type": "code" },
+        { "name": "medication_ref", "path": "medication.ofType(Reference).getReferenceKey()",                                     "type": "string" },
         { "name": "effective_dt",  "path": "effective.ofType(dateTime)",                                                         "type": "dateTime" },
         { "name": "period_start",  "path": "effective.ofType(Period).start",                                                     "type": "dateTime" },
         { "name": "period_end",    "path": "effective.ofType(Period).end",                                                       "type": "dateTime" },
