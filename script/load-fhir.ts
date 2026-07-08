@@ -20,7 +20,7 @@ import loadDir from "../src/fhir/loadDir";
 
 const arg = process.argv[2];
 if (!arg) {
-    console.error("usage: bun script/load-fhir.ts <dir-of-fhir-bundles | one-bundle.json>");
+    console.error("usage: bun script/load-fhir.ts <dir-of-fhir-bundles | one-bundle.json> [--normalize]");
     process.exit(2);
 }
 const ctx = { env: process.env } as any;
@@ -32,6 +32,16 @@ if (statSync(arg).isDirectory()) {
     await init(ctx);
     const result = await loadBundle(ctx, { path: arg });
     console.log(JSON.stringify(result, null, 2));
+}
+
+// --normalize: resolve conditional/identifier references to deterministic uuid5
+// surrogate ids so foreign keys line up (needed for e.g. Synthea, which
+// references serviceProvider/participant by identifier, not by resource id).
+// Global pass over all of fhir.*, so run it once after the whole dataset loads.
+if (process.argv.includes("--normalize")) {
+    console.log("normalizing references (identifier/conditional → uuid5)…");
+    const p = Bun.spawn(["bun", "script/normalize-refs.ts"], { stdout: "inherit", stderr: "inherit" });
+    if ((await p.exited) !== 0) process.exit(1);
 }
 
 process.exit(0);
