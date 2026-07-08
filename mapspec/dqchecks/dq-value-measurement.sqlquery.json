@@ -1,0 +1,47 @@
+{
+  "resourceType": "Library",
+  "id": "dq-value-measurement",
+  "url": "https://fhir2omop.health-samurai.io/StructureDefinition/Library/dq-value-measurement",
+  "name": "dq_value_measurement",
+  "title": "measurement: row carries no value (value_as_number / value_as_concept_id / value_source_value all null)",
+  "status": "active",
+  "type": {
+    "coding": [
+      {
+        "system": "http://hl7.org/fhir/uv/sql-on-fhir/CodeSystem/library-type",
+        "code": "sqlquery"
+      }
+    ]
+  },
+  "extension": [
+    {
+      "url": "https://fhir2omop.health-samurai.io/StructureDefinition/dq-kahn-category",
+      "valueCode": "completeness"
+    },
+    {
+      "url": "https://fhir2omop.health-samurai.io/StructureDefinition/dq-check-type",
+      "valueString": "measureValueCompleteness"
+    },
+    {
+      "url": "https://fhir2omop.health-samurai.io/StructureDefinition/dq-threshold-pct",
+      "valueDecimal": 5
+    },
+    {
+      "url": "https://fhir2omop.health-samurai.io/StructureDefinition/dq-severity",
+      "valueCode": "warning"
+    }
+  ],
+  "parameter": [
+    {
+      "name": "cdmTable",
+      "use": "in",
+      "valueString": "measurement"
+    }
+  ],
+  "content": [
+    {
+      "contentType": "text/sql",
+      "data": "SELECT * FROM cdm_ours_fhir.measurement WHERE value_as_number IS NULL AND value_as_concept_id IS NULL AND value_source_value IS NULL"
+    }
+  ]
+}

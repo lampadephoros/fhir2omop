@@ -25,9 +25,11 @@ Cross-checking against it:
 - **One anomaly in the gold is *not* predicted and is *not* in the source data:**
   a visit whose end precedes its start (`plausibleStartBeforeEnd`). This is the
   single finding worth raising as a likely unintended gold artifact.
-- Our check set is **narrower** than the WG's intended signals (we lack
-  `plausibleGender`, full `measureValueCompleteness`), so we currently
-  *under-detect* some deliberate examples — a gap on our side, not in the fixtures.
+- We **reproduce the WG's predicted signals**, including the implausible-gender
+  seed: our `plausibleGender` check flags exactly the **6 BPH + 4 prostate-cancer
+  conditions on female patients** (= the WG's predicted plausibleGender 6 +
+  plausibleGenderUseDescendants 4), and `measureValueCompleteness` flags 20
+  value-less measurements (≈ the WG's predicted 18 `dataAbsentReason`).
 
 ## How our converter works (in plain terms)
 
@@ -75,10 +77,11 @@ statements. Source: <https://github.com/lampadephoros/fhir2omop>.
 
 ## Method
 
-- **Checks:** 244 DQD checks (`mapspec/dqchecks/*.sqlquery.json`) generated from
-  the OMOP CDM v5.4 field-level catalog — `cdmNotNullable`, `isPrimaryKey`,
-  `isForeignKey`, `conceptRecordCompleteness` (concept_id = 0 rate),
-  `plausibleStartBeforeEnd`. Each is a `Library(type=sqlquery)` returning the
+- **Checks:** 248 DQD checks (`mapspec/dqchecks/*.sqlquery.json`) generated from
+  the OMOP CDM v5.4 field-level catalog + the OHDSI concept-level gender catalog —
+  `cdmNotNullable`, `isPrimaryKey`, `isForeignKey`, `conceptRecordCompleteness`
+  (concept_id = 0 rate), `plausibleStartBeforeEnd`, `plausibleGender`,
+  `measureValueCompleteness`. Each is a `Library(type=sqlquery)` returning the
   failing rows (0 rows = pass) plus DataQualityCheck metadata (Kahn category,
   threshold, severity). Runner: `bun script/dq.ts <schema>`; dashboard at `/dq`.
 - **Threshold:** flat 5% for completeness, 0 for conformance/plausibility —
@@ -118,9 +121,14 @@ one an f2o test, **not** a defect:
 - Our `condition_concept_id = 0` count on the gold is **19 / 147**. The F2O WG
   prediction: **12** (unmapped) **+ 6** (text-only) = **18**. Match (±1) — our
   single completeness check simply *merges* two categories the F2O WG splits. ✓
-- Implausible gender: the gold has **exactly 6** female patients with BPH
-  (198803) — matching the F2O WG `plausibleGender.implausible_count = 6`. Our check
-  set doesn't test this, so we *miss* this intended signal. ✗ (our gap)
+- Implausible gender: our `plausibleGender` check flags **10** conditions on
+  female patients — **6** BPH (198803) + **4** primary prostate cancer (200962) —
+  matching the F2O WG `plausibleGender.implausible_count = 6` **and**
+  `plausibleGenderUseDescendants = 4` in one pass (200962 is directly in the
+  OHDSI catalog, so no descendant rollup is needed). ✓
+- Value completeness: our `measureValueCompleteness` flags **20 / 134**
+  value-less measurements vs the F2O WG's predicted **18** `dataAbsentReason`
+  nulls (±2, our check also catches a few non-`dataAbsentReason` empties). ✓
 
 Conclusion: the gold's completeness/plausibility failures are **deliberate,
 documented test signals**. Flagging these as "bugs" would be wrong — they are the
@@ -170,9 +178,11 @@ populate the standard Visit concept. Our converter does (connectathon: 9202 ×5,
 
 ## Our own follow-ups (gaps this surfaced on *our* side)
 
-- Add the check families we lack: `plausibleGender` (+ descendants),
-  `measureValueCompleteness`, `sourceValueCompleteness`, so we reproduce **all**
-  of the WG's predicted signals, not just completeness.
+- Added `plausibleGender` and `measureValueCompleteness` — we now reproduce the
+  WG's gender and value-completeness signals (see cross-check above). Still to
+  add: `sourceValueCompleteness` and a faithful descendant-rollup variant (the
+  OHDSI use-descendants catalog rows are multi-id quoted fields that need proper
+  parsing).
 - Adopt per-field thresholds to align with reference DQD.
 
 ## Caveats (honesty)

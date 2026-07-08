@@ -114,4 +114,43 @@ for (const [table, s, e] of START_END) {
         `SELECT * FROM cdm_ours_fhir.${table} WHERE ${e} IS NOT NULL AND ${s} > ${e}`);
 }
 
+// 5. Plausibility — sex-specific concept on the wrong gender (DQD
+// plausibleGender + plausibleGenderUseDescendants), from the OHDSI concept-level
+// catalog vendored as _concept_gender.tsv. Reproduces the F2O WG's predicted
+// implausible-gender signals (e.g. BPH / prostate on female patients).
+const genderRows = readFileSync("mapspec/dq_concept_gender.tsv", "utf8").split("\n").filter(Boolean)
+    .map((l) => l.split("\t"));  // [cdmTable, cdmField, conceptId, gender, useDescFlag]
+const maleIds = [...new Set(genderRows.filter((r) => r[3] === "Male").map((r) => r[2]))];
+const femaleIds = [...new Set(genderRows.filter((r) => r[3] === "Female").map((r) => r[2]))];
+const GENDER_TABLES: [string, string][] = [
+    ["condition_occurrence", "condition_concept_id"],
+    ["procedure_occurrence", "procedure_concept_id"],
+];
+for (const [table, field] of GENDER_TABLES) {
+    const T = `cdm_ours_fhir.${table}`;
+    // 8507 = MALE gender, 8532 = FEMALE gender
+    // Direct (parent-level) sex-specific concept check. NOTE: this uses the full
+    // OHDSI plausibleGender catalog, so on a seeded dataset it flags the WG's
+    // deliberate implausible rows (e.g. BPH 198803 on female) *and* any other
+    // sex-specific concept present — a superset of the WG's narrow predicted
+    // count, not an exact reproduction. The descendant-rollup variant
+    // (plausibleGenderUseDescendants) is intentionally omitted: the OHDSI catalog
+    // encodes its use-descendants concepts as multi-id quoted fields that don't
+    // parse cleanly, and a naive rollup over all 287 concepts over-reaches.
+    emit(`dq-gender-${table}`,
+        `${table}.${field}: sex-specific concept on the wrong gender`, "plausibility", "plausibleGender", 0, "warning", table, field,
+        `SELECT t.* FROM ${T} t JOIN cdm_ours_fhir.person p ON p.person_id = t.person_id
+         WHERE (t.${field} IN (${maleIds.join(",")})   AND p.gender_concept_id = 8532)
+            OR (t.${field} IN (${femaleIds.join(",")}) AND p.gender_concept_id = 8507)`);
+}
+
+// 6. Completeness — measurement/observation with no value at all (DQD
+// measureValueCompleteness). Reproduces the F2O WG dataAbsentReason signal.
+const VALUE_TABLES: [string, string][] = [["measurement", "value_as_number"], ["observation", "value_as_number"]];
+for (const [table] of VALUE_TABLES) {
+    emit(`dq-value-${table}`,
+        `${table}: row carries no value (value_as_number / value_as_concept_id / value_source_value all null)`, "completeness", "measureValueCompleteness", 5, "warning", table, null,
+        `SELECT * FROM cdm_ours_fhir.${table} WHERE value_as_number IS NULL AND value_as_concept_id IS NULL AND value_source_value IS NULL`);
+}
+
 console.log(`wrote ${n} SQLQuery-Library DQ checks → ${OUT}/`);
