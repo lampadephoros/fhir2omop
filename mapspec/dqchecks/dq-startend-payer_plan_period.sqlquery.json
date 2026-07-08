@@ -1,0 +1,47 @@
+{
+  "resourceType": "Library",
+  "id": "dq-startend-payer_plan_period",
+  "url": "https://fhir2omop.health-samurai.io/StructureDefinition/Library/dq-startend-payer_plan_period",
+  "name": "dq_startend_payer_plan_period",
+  "title": "payer_plan_period: payer_plan_period_start_date SHALL NOT be after payer_plan_period_end_date",
+  "status": "active",
+  "type": {
+    "coding": [
+      {
+        "system": "http://hl7.org/fhir/uv/sql-on-fhir/CodeSystem/library-type",
+        "code": "sqlquery"
+      }
+    ]
+  },
+  "extension": [
+    {
+      "url": "https://fhir2omop.health-samurai.io/StructureDefinition/dq-kahn-category",
+      "valueCode": "plausibility"
+    },
+    {
+      "url": "https://fhir2omop.health-samurai.io/StructureDefinition/dq-check-type",
+      "valueString": "plausibleStartBeforeEnd"
+    },
+    {
+      "url": "https://fhir2omop.health-samurai.io/StructureDefinition/dq-threshold-pct",
+      "valueDecimal": 0
+    },
+    {
+      "url": "https://fhir2omop.health-samurai.io/StructureDefinition/dq-severity",
+      "valueCode": "error"
+    }
+  ],
+  "parameter": [
+    {
+      "name": "cdmTable",
+      "use": "in",
+      "valueString": "payer_plan_period"
+    }
+  ],
+  "content": [
+    {
+      "contentType": "text/sql",
+      "data": "SELECT * FROM cdm_ours_fhir.payer_plan_period WHERE payer_plan_period_end_date IS NOT NULL AND payer_plan_period_start_date > payer_plan_period_end_date"
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "resourceType": "Library",
+  "id": "dq-startend-observation_period",
+  "url": "https://fhir2omop.health-samurai.io/StructureDefinition/Library/dq-startend-observation_period",
+  "name": "dq_startend_observation_period",
+  "title": "observation_period: observation_period_start_date SHALL NOT be after observation_period_end_date",
+  "status": "active",
+  "type": {
+    "coding": [
+      {
+        "system": "http://hl7.org/fhir/uv/sql-on-fhir/CodeSystem/library-type",
+        "code": "sqlquery"
+      }
+    ]
+  },
+  "extension": [
+    {
+      "url": "https://fhir2omop.health-samurai.io/StructureDefinition/dq-kahn-category",
+      "valueCode": "plausibility"
+    },
+    {
+      "url": "https://fhir2omop.health-samurai.io/StructureDefinition/dq-check-type",
+      "valueString": "plausibleStartBeforeEnd"
+    },
+    {
+      "url": "https://fhir2omop.health-samurai.io/StructureDefinition/dq-threshold-pct",
+      "valueDecimal": 0
+    },
+    {
+      "url": "https://fhir2omop.health-samurai.io/StructureDefinition/dq-severity",
+      "valueCode": "error"
+    }
+  ],
+  "parameter": [
+    {
+      "name": "cdmTable",
+      "use": "in",
+      "valueString": "observation_period"
+    }
+  ],
+  "content": [
+    {
+      "contentType": "text/sql",
+      "data": "SELECT * FROM cdm_ours_fhir.observation_period WHERE observation_period_end_date IS NOT NULL AND observation_period_start_date > observation_period_end_date"
+    }
+  ]
+}

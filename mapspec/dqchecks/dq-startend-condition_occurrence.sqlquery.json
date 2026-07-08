@@ -1,0 +1,47 @@
+{
+  "resourceType": "Library",
+  "id": "dq-startend-condition_occurrence",
+  "url": "https://fhir2omop.health-samurai.io/StructureDefinition/Library/dq-startend-condition_occurrence",
+  "name": "dq_startend_condition_occurrence",
+  "title": "condition_occurrence: condition_start_date SHALL NOT be after condition_end_date",
+  "status": "active",
+  "type": {
+    "coding": [
+      {
+        "system": "http://hl7.org/fhir/uv/sql-on-fhir/CodeSystem/library-type",
+        "code": "sqlquery"
+      }
+    ]
+  },
+  "extension": [
+    {
+      "url": "https://fhir2omop.health-samurai.io/StructureDefinition/dq-kahn-category",
+      "valueCode": "plausibility"
+    },
+    {
+      "url": "https://fhir2omop.health-samurai.io/StructureDefinition/dq-check-type",
+      "valueString": "plausibleStartBeforeEnd"
+    },
+    {
+      "url": "https://fhir2omop.health-samurai.io/StructureDefinition/dq-threshold-pct",
+      "valueDecimal": 0
+    },
+    {
+      "url": "https://fhir2omop.health-samurai.io/StructureDefinition/dq-severity",
+      "valueCode": "error"
+    }
+  ],
+  "parameter": [
+    {
+      "name": "cdmTable",
+      "use": "in",
+      "valueString": "condition_occurrence"
+    }
+  ],
+  "content": [
+    {
+      "contentType": "text/sql",
+      "data": "SELECT * FROM cdm_ours_fhir.condition_occurrence WHERE condition_end_date IS NOT NULL AND condition_start_date > condition_end_date"
+    }
+  ]
+}

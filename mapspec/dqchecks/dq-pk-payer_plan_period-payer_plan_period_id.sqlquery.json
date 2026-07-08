@@ -1,0 +1,52 @@
+{
+  "resourceType": "Library",
+  "id": "dq-pk-payer_plan_period-payer_plan_period_id",
+  "url": "https://fhir2omop.health-samurai.io/StructureDefinition/Library/dq-pk-payer_plan_period-payer_plan_period_id",
+  "name": "dq_pk_payer_plan_period_payer_plan_period_id",
+  "title": "payer_plan_period.payer_plan_period_id SHALL be unique (primary key)",
+  "status": "active",
+  "type": {
+    "coding": [
+      {
+        "system": "http://hl7.org/fhir/uv/sql-on-fhir/CodeSystem/library-type",
+        "code": "sqlquery"
+      }
+    ]
+  },
+  "extension": [
+    {
+      "url": "https://fhir2omop.health-samurai.io/StructureDefinition/dq-kahn-category",
+      "valueCode": "conformance"
+    },
+    {
+      "url": "https://fhir2omop.health-samurai.io/StructureDefinition/dq-check-type",
+      "valueString": "isPrimaryKey"
+    },
+    {
+      "url": "https://fhir2omop.health-samurai.io/StructureDefinition/dq-threshold-pct",
+      "valueDecimal": 0
+    },
+    {
+      "url": "https://fhir2omop.health-samurai.io/StructureDefinition/dq-severity",
+      "valueCode": "error"
+    }
+  ],
+  "parameter": [
+    {
+      "name": "cdmTable",
+      "use": "in",
+      "valueString": "payer_plan_period"
+    },
+    {
+      "name": "cdmField",
+      "use": "in",
+      "valueString": "payer_plan_period_id"
+    }
+  ],
+  "content": [
+    {
+      "contentType": "text/sql",
+      "data": "SELECT payer_plan_period_id FROM cdm_ours_fhir.payer_plan_period GROUP BY payer_plan_period_id HAVING COUNT(*) > 1"
+    }
+  ]
+}

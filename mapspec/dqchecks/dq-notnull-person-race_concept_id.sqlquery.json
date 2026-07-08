@@ -1,0 +1,52 @@
+{
+  "resourceType": "Library",
+  "id": "dq-notnull-person-race_concept_id",
+  "url": "https://fhir2omop.health-samurai.io/StructureDefinition/Library/dq-notnull-person-race_concept_id",
+  "name": "dq_notnull_person_race_concept_id",
+  "title": "person.race_concept_id SHALL NOT be NULL",
+  "status": "active",
+  "type": {
+    "coding": [
+      {
+        "system": "http://hl7.org/fhir/uv/sql-on-fhir/CodeSystem/library-type",
+        "code": "sqlquery"
+      }
+    ]
+  },
+  "extension": [
+    {
+      "url": "https://fhir2omop.health-samurai.io/StructureDefinition/dq-kahn-category",
+      "valueCode": "conformance"
+    },
+    {
+      "url": "https://fhir2omop.health-samurai.io/StructureDefinition/dq-check-type",
+      "valueString": "cdmNotNullable"
+    },
+    {
+      "url": "https://fhir2omop.health-samurai.io/StructureDefinition/dq-threshold-pct",
+      "valueDecimal": 0
+    },
+    {
+      "url": "https://fhir2omop.health-samurai.io/StructureDefinition/dq-severity",
+      "valueCode": "error"
+    }
+  ],
+  "parameter": [
+    {
+      "name": "cdmTable",
+      "use": "in",
+      "valueString": "person"
+    },
+    {
+      "name": "cdmField",
+      "use": "in",
+      "valueString": "race_concept_id"
+    }
+  ],
+  "content": [
+    {
+      "contentType": "text/sql",
+      "data": "SELECT * FROM cdm_ours_fhir.person WHERE race_concept_id IS NULL"
+    }
+  ]
+}

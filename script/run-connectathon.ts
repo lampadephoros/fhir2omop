@@ -145,6 +145,15 @@ async function produce(resources: any[]): Promise<{ produced: Set<string>; rowsB
 const { produced, rowsByTable } = await produce(readResources(DIR));
 console.log(`produced tables: ${[...produced].join(", ")}\n`);
 
+// PERSIST_CDM=<schema> clones the produced OMOP into a durable schema so DQD
+// can run against the connectathon output: bun script/dq.ts <schema>
+if (process.env.PERSIST_CDM) {
+    const s = process.env.PERSIST_CDM;
+    await runScript(`DROP SCHEMA IF EXISTS ${s} CASCADE; CREATE SCHEMA ${s};`);
+    for (const t of produced) await runScript(`CREATE TABLE ${s}.${t} AS SELECT * FROM ${T.cdm}.${t};`);
+    console.log(`persisted OMOP → schema ${s}  (DQD: bun script/dq.ts ${s})\n`);
+}
+
 const expected = JSON.parse(readFileSync(join(DIR, "expected_results.json"), "utf8")).expected;
 const srcvalCol: Record<string, string> = {
     condition_occurrence: "condition_source_value", measurement: "measurement_source_value",

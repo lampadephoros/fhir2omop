@@ -1,0 +1,52 @@
+{
+  "resourceType": "Library",
+  "id": "dq-notnull-measurement-measurement_id",
+  "url": "https://fhir2omop.health-samurai.io/StructureDefinition/Library/dq-notnull-measurement-measurement_id",
+  "name": "dq_notnull_measurement_measurement_id",
+  "title": "measurement.measurement_id SHALL NOT be NULL",
+  "status": "active",
+  "type": {
+    "coding": [
+      {
+        "system": "http://hl7.org/fhir/uv/sql-on-fhir/CodeSystem/library-type",
+        "code": "sqlquery"
+      }
+    ]
+  },
+  "extension": [
+    {
+      "url": "https://fhir2omop.health-samurai.io/StructureDefinition/dq-kahn-category",
+      "valueCode": "conformance"
+    },
+    {
+      "url": "https://fhir2omop.health-samurai.io/StructureDefinition/dq-check-type",
+      "valueString": "cdmNotNullable"
+    },
+    {
+      "url": "https://fhir2omop.health-samurai.io/StructureDefinition/dq-threshold-pct",
+      "valueDecimal": 0
+    },
+    {
+      "url": "https://fhir2omop.health-samurai.io/StructureDefinition/dq-severity",
+      "valueCode": "error"
+    }
+  ],
+  "parameter": [
+    {
+      "name": "cdmTable",
+      "use": "in",
+      "valueString": "measurement"
+    },
+    {
+      "name": "cdmField",
+      "use": "in",
+      "valueString": "measurement_id"
+    }
+  ],
+  "content": [
+    {
+      "contentType": "text/sql",
+      "data": "SELECT * FROM cdm_ours_fhir.measurement WHERE measurement_id IS NULL"
+    }
+  ]
+}

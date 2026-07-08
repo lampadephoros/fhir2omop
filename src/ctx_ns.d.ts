@@ -23,6 +23,9 @@ declare global {
         connect: typeof import("./db/connect").default;
         query: typeof import("./db/query").default;
         };
+        dq: {
+        run: typeof import("./dq/run").default;
+        };
         etl_fhir: {
         runEdge: typeof import("./etl_fhir/runEdge").default;
         };

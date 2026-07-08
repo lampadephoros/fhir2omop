@@ -1,0 +1,52 @@
+{
+  "resourceType": "Library",
+  "id": "dq-mapped-drug_exposure-route_concept_id",
+  "url": "https://fhir2omop.health-samurai.io/StructureDefinition/Library/dq-mapped-drug_exposure-route_concept_id",
+  "name": "dq_mapped_drug_exposure_route_concept_id",
+  "title": "drug_exposure.route_concept_id mapped to a non-zero concept (completeness)",
+  "status": "active",
+  "type": {
+    "coding": [
+      {
+        "system": "http://hl7.org/fhir/uv/sql-on-fhir/CodeSystem/library-type",
+        "code": "sqlquery"
+      }
+    ]
+  },
+  "extension": [
+    {
+      "url": "https://fhir2omop.health-samurai.io/StructureDefinition/dq-kahn-category",
+      "valueCode": "completeness"
+    },
+    {
+      "url": "https://fhir2omop.health-samurai.io/StructureDefinition/dq-check-type",
+      "valueString": "conceptRecordCompleteness"
+    },
+    {
+      "url": "https://fhir2omop.health-samurai.io/StructureDefinition/dq-threshold-pct",
+      "valueDecimal": 5
+    },
+    {
+      "url": "https://fhir2omop.health-samurai.io/StructureDefinition/dq-severity",
+      "valueCode": "warning"
+    }
+  ],
+  "parameter": [
+    {
+      "name": "cdmTable",
+      "use": "in",
+      "valueString": "drug_exposure"
+    },
+    {
+      "name": "cdmField",
+      "use": "in",
+      "valueString": "route_concept_id"
+    }
+  ],
+  "content": [
+    {
+      "contentType": "text/sql",
+      "data": "SELECT * FROM cdm_ours_fhir.drug_exposure WHERE route_concept_id = 0"
+    }
+  ]
+}

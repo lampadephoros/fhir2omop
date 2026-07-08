@@ -1,0 +1,52 @@
+{
+  "resourceType": "Library",
+  "id": "dq-fk-observation-visit_detail_id",
+  "url": "https://fhir2omop.health-samurai.io/StructureDefinition/Library/dq-fk-observation-visit_detail_id",
+  "name": "dq_fk_observation_visit_detail_id",
+  "title": "observation.visit_detail_id SHALL reference an existing visit_detail.visit_detail_id",
+  "status": "active",
+  "type": {
+    "coding": [
+      {
+        "system": "http://hl7.org/fhir/uv/sql-on-fhir/CodeSystem/library-type",
+        "code": "sqlquery"
+      }
+    ]
+  },
+  "extension": [
+    {
+      "url": "https://fhir2omop.health-samurai.io/StructureDefinition/dq-kahn-category",
+      "valueCode": "conformance"
+    },
+    {
+      "url": "https://fhir2omop.health-samurai.io/StructureDefinition/dq-check-type",
+      "valueString": "isForeignKey"
+    },
+    {
+      "url": "https://fhir2omop.health-samurai.io/StructureDefinition/dq-threshold-pct",
+      "valueDecimal": 0
+    },
+    {
+      "url": "https://fhir2omop.health-samurai.io/StructureDefinition/dq-severity",
+      "valueCode": "error"
+    }
+  ],
+  "parameter": [
+    {
+      "name": "cdmTable",
+      "use": "in",
+      "valueString": "observation"
+    },
+    {
+      "name": "cdmField",
+      "use": "in",
+      "valueString": "visit_detail_id"
+    }
+  ],
+  "content": [
+    {
+      "contentType": "text/sql",
+      "data": "SELECT a.* FROM cdm_ours_fhir.observation a WHERE a.visit_detail_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM cdm_ours_fhir.visit_detail b WHERE b.visit_detail_id = a.visit_detail_id)"
+    }
+  ]
+}

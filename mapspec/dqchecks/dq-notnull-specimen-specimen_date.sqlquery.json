@@ -1,0 +1,52 @@
+{
+  "resourceType": "Library",
+  "id": "dq-notnull-specimen-specimen_date",
+  "url": "https://fhir2omop.health-samurai.io/StructureDefinition/Library/dq-notnull-specimen-specimen_date",
+  "name": "dq_notnull_specimen_specimen_date",
+  "title": "specimen.specimen_date SHALL NOT be NULL",
+  "status": "active",
+  "type": {
+    "coding": [
+      {
+        "system": "http://hl7.org/fhir/uv/sql-on-fhir/CodeSystem/library-type",
+        "code": "sqlquery"
+      }
+    ]
+  },
+  "extension": [
+    {
+      "url": "https://fhir2omop.health-samurai.io/StructureDefinition/dq-kahn-category",
+      "valueCode": "conformance"
+    },
+    {
+      "url": "https://fhir2omop.health-samurai.io/StructureDefinition/dq-check-type",
+      "valueString": "cdmNotNullable"
+    },
+    {
+      "url": "https://fhir2omop.health-samurai.io/StructureDefinition/dq-threshold-pct",
+      "valueDecimal": 0
+    },
+    {
+      "url": "https://fhir2omop.health-samurai.io/StructureDefinition/dq-severity",
+      "valueCode": "error"
+    }
+  ],
+  "parameter": [
+    {
+      "name": "cdmTable",
+      "use": "in",
+      "valueString": "specimen"
+    },
+    {
+      "name": "cdmField",
+      "use": "in",
+      "valueString": "specimen_date"
+    }
+  ],
+  "content": [
+    {
+      "contentType": "text/sql",
+      "data": "SELECT * FROM cdm_ours_fhir.specimen WHERE specimen_date IS NULL"
+    }
+  ]
+}

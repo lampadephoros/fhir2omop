@@ -1,0 +1,52 @@
+{
+  "resourceType": "Library",
+  "id": "dq-fk-condition_occurrence-condition_type_concept_id",
+  "url": "https://fhir2omop.health-samurai.io/StructureDefinition/Library/dq-fk-condition_occurrence-condition_type_concept_id",
+  "name": "dq_fk_condition_occurrence_condition_type_concept_id",
+  "title": "condition_occurrence.condition_type_concept_id SHALL reference an existing concept.concept_id",
+  "status": "active",
+  "type": {
+    "coding": [
+      {
+        "system": "http://hl7.org/fhir/uv/sql-on-fhir/CodeSystem/library-type",
+        "code": "sqlquery"
+      }
+    ]
+  },
+  "extension": [
+    {
+      "url": "https://fhir2omop.health-samurai.io/StructureDefinition/dq-kahn-category",
+      "valueCode": "conformance"
+    },
+    {
+      "url": "https://fhir2omop.health-samurai.io/StructureDefinition/dq-check-type",
+      "valueString": "isForeignKey"
+    },
+    {
+      "url": "https://fhir2omop.health-samurai.io/StructureDefinition/dq-threshold-pct",
+      "valueDecimal": 0
+    },
+    {
+      "url": "https://fhir2omop.health-samurai.io/StructureDefinition/dq-severity",
+      "valueCode": "error"
+    }
+  ],
+  "parameter": [
+    {
+      "name": "cdmTable",
+      "use": "in",
+      "valueString": "condition_occurrence"
+    },
+    {
+      "name": "cdmField",
+      "use": "in",
+      "valueString": "condition_type_concept_id"
+    }
+  ],
+  "content": [
+    {
+      "contentType": "text/sql",
+      "data": "SELECT a.* FROM cdm_ours_fhir.condition_occurrence a WHERE a.condition_type_concept_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM vocab.concept b WHERE b.concept_id = a.condition_type_concept_id)"
+    }
+  ]
+}

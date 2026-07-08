@@ -1,0 +1,52 @@
+{
+  "resourceType": "Library",
+  "id": "dq-fk-device_exposure-person_id",
+  "url": "https://fhir2omop.health-samurai.io/StructureDefinition/Library/dq-fk-device_exposure-person_id",
+  "name": "dq_fk_device_exposure_person_id",
+  "title": "device_exposure.person_id SHALL reference an existing person.person_id",
+  "status": "active",
+  "type": {
+    "coding": [
+      {
+        "system": "http://hl7.org/fhir/uv/sql-on-fhir/CodeSystem/library-type",
+        "code": "sqlquery"
+      }
+    ]
+  },
+  "extension": [
+    {
+      "url": "https://fhir2omop.health-samurai.io/StructureDefinition/dq-kahn-category",
+      "valueCode": "conformance"
+    },
+    {
+      "url": "https://fhir2omop.health-samurai.io/StructureDefinition/dq-check-type",
+      "valueString": "isForeignKey"
+    },
+    {
+      "url": "https://fhir2omop.health-samurai.io/StructureDefinition/dq-threshold-pct",
+      "valueDecimal": 0
+    },
+    {
+      "url": "https://fhir2omop.health-samurai.io/StructureDefinition/dq-severity",
+      "valueCode": "error"
+    }
+  ],
+  "parameter": [
+    {
+      "name": "cdmTable",
+      "use": "in",
+      "valueString": "device_exposure"
+    },
+    {
+      "name": "cdmField",
+      "use": "in",
+      "valueString": "person_id"
+    }
+  ],
+  "content": [
+    {
+      "contentType": "text/sql",
+      "data": "SELECT a.* FROM cdm_ours_fhir.device_exposure a WHERE a.person_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM cdm_ours_fhir.person b WHERE b.person_id = a.person_id)"
+    }
+  ]
+}

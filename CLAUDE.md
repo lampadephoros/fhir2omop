@@ -847,6 +847,41 @@ per URL on the edge page (above the ETL SQL card). Edits to view JSONs no
 longer need a profiles-cache clear — `src/profiles/load.ts` reads from
 disk on every call.
 
+## Data Quality (DQD as SQL-on-FHIR SQLQuery-Library)
+
+OHDSI DQD check families re-expressed as SQL-on-FHIR **SQLQuery-Library**
+resources (per [HL7/sql-on-fhir#375](https://github.com/HL7/sql-on-fhir/issues/375)):
+each check is a `Library(type=sqlquery)` whose SQL returns the FAILING rows
+(0 rows = pass) plus DataQualityCheck metadata (Kahn category, threshold,
+severity). Run against any populated OMOP schema (`cdm_ours_fhir`, or a schema
+holding an external gold like `cdm_gold`).
+
+```
+script/gen-dqchecks.ts        # CDM v5.4 field catalog → mapspec/dqchecks/*.sqlquery.json (244 checks)
+mapspec/dqchecks/*.json       # the generated SQLQuery-Library check resources (committed artifact)
+src/dq/run.ts                 # ctx.fns.dq.run — execute checks vs a schema, pctViolatedRows report
+script/dq.ts                  # CLI: bun script/dq.ts [schema] → writes .hyper/_runtime/dq-<schema>.json
+src/dq/$route_GET.ts          # GET /dq   — dashboard (schema switcher, category/table grouping, All/Failing filter)
+src/dq/$route_$id_GET.ts      # GET /dq/:id — drill-down: SQL (shiki) + actual failing rows
+```
+
+Check families generated: `cdmNotNullable`, `isPrimaryKey`, `isForeignKey`,
+`conceptRecordCompleteness` (concept_id = 0 rate), `plausibleStartBeforeEnd`.
+Threshold is a flat 5% for completeness (stricter than reference DQD's per-field
+thresholds — a known follow-up). Missing families vs the F2O WG's predicted
+signals: `plausibleGender`, `measureValueCompleteness` (follow-up).
+
+See `docs/connectathon-dqd-report.md` for the experiment comparing our output to
+the F2O Connectathon gold oracle.
+
+> **Reference normalization on load.** Synthea (and other sources) reference
+> serviceProvider / participant by *conditional/identifier* reference
+> (`Organization?identifier=sys|val`), not by `Type/id`, so FKs never line up
+> with `.id`-hashed surrogate keys. `script/normalize-refs.ts` (or
+> `bun script/load-fhir.ts <dir> --normalize`) rewrites every resource id to
+> `uuid5(identifier)` and remaps all references to match — run once after load,
+> before ETL.
+
 ## Viewer App (Bun + htmx)
 
 `bun src/$main.ts` boots the dev server on `:3000` (override with `$PORT`).

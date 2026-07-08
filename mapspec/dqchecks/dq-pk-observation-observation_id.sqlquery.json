@@ -1,0 +1,52 @@
+{
+  "resourceType": "Library",
+  "id": "dq-pk-observation-observation_id",
+  "url": "https://fhir2omop.health-samurai.io/StructureDefinition/Library/dq-pk-observation-observation_id",
+  "name": "dq_pk_observation_observation_id",
+  "title": "observation.observation_id SHALL be unique (primary key)",
+  "status": "active",
+  "type": {
+    "coding": [
+      {
+        "system": "http://hl7.org/fhir/uv/sql-on-fhir/CodeSystem/library-type",
+        "code": "sqlquery"
+      }
+    ]
+  },
+  "extension": [
+    {
+      "url": "https://fhir2omop.health-samurai.io/StructureDefinition/dq-kahn-category",
+      "valueCode": "conformance"
+    },
+    {
+      "url": "https://fhir2omop.health-samurai.io/StructureDefinition/dq-check-type",
+      "valueString": "isPrimaryKey"
+    },
+    {
+      "url": "https://fhir2omop.health-samurai.io/StructureDefinition/dq-threshold-pct",
+      "valueDecimal": 0
+    },
+    {
+      "url": "https://fhir2omop.health-samurai.io/StructureDefinition/dq-severity",
+      "valueCode": "error"
+    }
+  ],
+  "parameter": [
+    {
+      "name": "cdmTable",
+      "use": "in",
+      "valueString": "observation"
+    },
+    {
+      "name": "cdmField",
+      "use": "in",
+      "valueString": "observation_id"
+    }
+  ],
+  "content": [
+    {
+      "contentType": "text/sql",
+      "data": "SELECT observation_id FROM cdm_ours_fhir.observation GROUP BY observation_id HAVING COUNT(*) > 1"
+    }
+  ]
+}
