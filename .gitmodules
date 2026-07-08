@@ -118,3 +118,9 @@
 [submodule "refs/refs/kameheads-omop"]
 	path = refs/refs/kameheads-omop
 	url = https://github.com/kameheads/omop.git
+[submodule "refs/refs/enchilada"]
+	path = refs/refs/enchilada
+	url = https://github.com/croeder-fhir-to-omop/enchilada.git
+[submodule "refs/refs/dqd_docker"]
+	path = refs/refs/dqd_docker
+	url = https://github.com/croeder-fhir-to-omop/dqd_docker.git
