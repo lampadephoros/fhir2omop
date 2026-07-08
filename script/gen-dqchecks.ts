@@ -153,4 +153,26 @@ for (const [table] of VALUE_TABLES) {
         `SELECT * FROM cdm_ours_fhir.${table} WHERE value_as_number IS NULL AND value_as_concept_id IS NULL AND value_source_value IS NULL`);
 }
 
+// 7. Completeness — the row's *_source_value (traceability anchor back to the
+// source record) must be present (DQD sourceValueCompleteness). A null here
+// means the OMOP row cannot be traced to its origin. Reproduces the F2O WG
+// f2o-033 signal (text-only conditions → null condition_source_value).
+const SOURCE_VALUE: [string, string][] = [
+    ["condition_occurrence", "condition_source_value"],
+    ["procedure_occurrence", "procedure_source_value"],
+    ["measurement", "measurement_source_value"],
+    ["observation", "observation_source_value"],
+    ["drug_exposure", "drug_source_value"],
+    ["device_exposure", "device_source_value"],
+    ["visit_occurrence", "visit_source_value"],
+    ["specimen", "specimen_source_value"],
+    ["note", "note_source_value"],
+    ["person", "person_source_value"],
+];
+for (const [table, field] of SOURCE_VALUE) {
+    emit(`dq-srcval-${table}`,
+        `${table}.${field} present (source traceability)`, "completeness", "sourceValueCompleteness", 0, "warning", table, field,
+        `SELECT * FROM cdm_ours_fhir.${table} WHERE ${field} IS NULL OR ${field} = ''`);
+}
+
 console.log(`wrote ${n} SQLQuery-Library DQ checks → ${OUT}/`);

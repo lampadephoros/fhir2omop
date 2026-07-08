@@ -857,7 +857,7 @@ severity). Run against any populated OMOP schema (`cdm_ours_fhir`, or a schema
 holding an external gold like `cdm_gold`).
 
 ```
-script/gen-dqchecks.ts        # CDM v5.4 field catalog → mapspec/dqchecks/*.sqlquery.json (248 checks)
+script/gen-dqchecks.ts        # CDM v5.4 field catalog → mapspec/dqchecks/*.sqlquery.json (258 checks)
 mapspec/dqchecks/*.json       # the generated SQLQuery-Library check resources (committed artifact)
 src/dq/run.ts                 # ctx.fns.dq.run — execute checks vs a schema, pctViolatedRows report
 script/dq.ts                  # CLI: bun script/dq.ts [schema] → writes .hyper/_runtime/dq-<schema>.json
@@ -868,9 +868,8 @@ src/dq/$route_$id_GET.ts      # GET /dq/:id — drill-down: SQL (shiki) + actual
 Check families generated: `cdmNotNullable`, `isPrimaryKey`, `isForeignKey`,
 `conceptRecordCompleteness` (concept_id = 0 rate), `plausibleStartBeforeEnd`,
 `plausibleGender` (OHDSI concept-gender catalog `mapspec/dq_concept_gender.tsv`),
-`measureValueCompleteness`. Threshold is a flat 5% for completeness (stricter than
-reference DQD's per-field thresholds — a known follow-up). Follow-up:
-`sourceValueCompleteness`, faithful descendant-rollup, per-field thresholds.
+`measureValueCompleteness`, `sourceValueCompleteness`. Threshold is a flat 5% for completeness (stricter than
+reference DQD's per-field thresholds — a known follow-up). Follow-up: faithful descendant-rollup, per-field thresholds.
 
 See `docs/connectathon-dqd-report.md` for the experiment comparing our output to
 the F2O Connectathon gold oracle.

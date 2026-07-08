@@ -1,0 +1,52 @@
+{
+  "resourceType": "Library",
+  "id": "dq-srcval-person",
+  "url": "https://fhir2omop.health-samurai.io/StructureDefinition/Library/dq-srcval-person",
+  "name": "dq_srcval_person",
+  "title": "person.person_source_value present (source traceability)",
+  "status": "active",
+  "type": {
+    "coding": [
+      {
+        "system": "http://hl7.org/fhir/uv/sql-on-fhir/CodeSystem/library-type",
+        "code": "sqlquery"
+      }
+    ]
+  },
+  "extension": [
+    {
+      "url": "https://fhir2omop.health-samurai.io/StructureDefinition/dq-kahn-category",
+      "valueCode": "completeness"
+    },
+    {
+      "url": "https://fhir2omop.health-samurai.io/StructureDefinition/dq-check-type",
+      "valueString": "sourceValueCompleteness"
+    },
+    {
+      "url": "https://fhir2omop.health-samurai.io/StructureDefinition/dq-threshold-pct",
+      "valueDecimal": 0
+    },
+    {
+      "url": "https://fhir2omop.health-samurai.io/StructureDefinition/dq-severity",
+      "valueCode": "warning"
+    }
+  ],
+  "parameter": [
+    {
+      "name": "cdmTable",
+      "use": "in",
+      "valueString": "person"
+    },
+    {
+      "name": "cdmField",
+      "use": "in",
+      "valueString": "person_source_value"
+    }
+  ],
+  "content": [
+    {
+      "contentType": "text/sql",
+      "data": "SELECT * FROM cdm_ours_fhir.person WHERE person_source_value IS NULL OR person_source_value = ''"
+    }
+  ]
+}

@@ -77,11 +77,11 @@ statements. Source: <https://github.com/lampadephoros/fhir2omop>.
 
 ## Method
 
-- **Checks:** 248 DQD checks (`mapspec/dqchecks/*.sqlquery.json`) generated from
+- **Checks:** 258 DQD checks (`mapspec/dqchecks/*.sqlquery.json`) generated from
   the OMOP CDM v5.4 field-level catalog + the OHDSI concept-level gender catalog —
   `cdmNotNullable`, `isPrimaryKey`, `isForeignKey`, `conceptRecordCompleteness`
   (concept_id = 0 rate), `plausibleStartBeforeEnd`, `plausibleGender`,
-  `measureValueCompleteness`. Each is a `Library(type=sqlquery)` returning the
+  `measureValueCompleteness`, `sourceValueCompleteness`. Each is a `Library(type=sqlquery)` returning the
   failing rows (0 rows = pass) plus DataQualityCheck metadata (Kahn category,
   threshold, severity). Runner: `bun script/dq.ts <schema>`; dashboard at `/dq`.
 - **Threshold:** flat 5% for completeness, 0 for conformance/plausibility —
@@ -129,6 +129,12 @@ one an f2o test, **not** a defect:
 - Value completeness: our `measureValueCompleteness` flags **20 / 134**
   value-less measurements vs the F2O WG's predicted **18** `dataAbsentReason`
   nulls (±2, our check also catches a few non-`dataAbsentReason` empties). ✓
+- Source-value completeness: our `sourceValueCompleteness` flags **exactly 6 / 147**
+  conditions with a null `condition_source_value` on the gold — the WG's predicted
+  6 text-only conditions (f2o-033). On our own output the same check is 0: we
+  always populate `*_source_value` (for a text-only condition we emit `code.text`
+  where the gold emits null — a genuine f2o-033 interpretation difference the
+  check surfaces quantitatively). ✓
 
 Conclusion: the gold's completeness/plausibility failures are **deliberate,
 documented test signals**. Flagging these as "bugs" would be wrong — they are the
@@ -178,9 +184,9 @@ populate the standard Visit concept. Our converter does (connectathon: 9202 ×5,
 
 ## Our own follow-ups (gaps this surfaced on *our* side)
 
-- Added `plausibleGender` and `measureValueCompleteness` — we now reproduce the
-  WG's gender and value-completeness signals (see cross-check above). Still to
-  add: `sourceValueCompleteness` and a faithful descendant-rollup variant (the
+- Added `plausibleGender`, `measureValueCompleteness` and
+  `sourceValueCompleteness` — we now reproduce all of the WG's predicted signals
+  (see cross-check above). Still to add: a faithful descendant-rollup variant (the
   OHDSI use-descendants catalog rows are multi-id quoted fields that need proper
   parsing).
 - Adopt per-field thresholds to align with reference DQD.
