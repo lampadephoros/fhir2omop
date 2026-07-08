@@ -7,10 +7,21 @@
 
 ## TL;DR
 
+**The whole thing — transformation *and* data quality — is expressed in the
+[SQL on FHIR](https://sql-on-fhir.org) standard, not bespoke ETL code.** Three
+standard artifact types do all the work:
+
+- **`ViewDefinition`** — flattens FHIR into tables (stage 1);
+- **SQL-View Library** — SQL views over those tables that map to OMOP CDM v5.4 (stage 2);
+- **SQL-Query Library** ([HL7/sql-on-fhir#375](https://github.com/HL7/sql-on-fhir/issues/375)) — SQL queries over the same views for the OHDSI DQD checks.
+
+Because it's all standard `ViewDefinition` + SQL Library resources, the pipeline
+is portable across SQL engines and fully inspectable — Postgres here is just the
+backend. This report is the Workflow-2 validation of that converter.
+
 We re-expressed the OHDSI Data Quality Dashboard (DQD) check families as
-SQL-on-FHIR **SQLQuery-Library** resources ([HL7/sql-on-fhir#375](https://github.com/HL7/sql-on-fhir/issues/375))
-and ran them against our converter's output **and** the F2O WG's own
-gold-standard OMOP tables.
+SQL-Query-Library resources and ran them against our converter's output **and**
+the F2O WG's own gold-standard OMOP tables.
 
 Crucially, the volume sample ships a **`volume_expected_dqd.json`** — the WG's
 own *predicted* DQD output — which is the ground truth for what is **intentional**.
@@ -31,48 +42,45 @@ Cross-checking against it:
   plausibleGenderUseDescendants 4), and `measureValueCompleteness` flags 20
   value-less measurements (≈ the WG's predicted 18 `dataAbsentReason`).
 
-## How our converter works (in plain terms)
+## The approach — everything is SQL on FHIR
 
-We do **ELT, not ETL** — Extract-**Load**-Transform. Instead of transforming FHIR
-in application code and then loading OMOP, we load the raw FHIR into the database
-first and transform **in place with SQL**, in two stages:
+The converter is **ELT** (Extract-**Load**-Transform): raw FHIR is loaded as-is,
+then transformed **in place with SQL**. What makes it different is that every
+transformation and every quality check is a **standard SQL-on-FHIR artifact** —
+there is no bespoke transformation code, and nothing is engine-specific.
 
-1. **Load** — every FHIR resource lands as-is in Postgres: one table per
-   resourceType, `id text` + `resource jsonb`. Nothing is interpreted yet.
-   (A one-time pass normalizes conditional/identifier references to deterministic
-   `uuid5` surrogate ids so foreign keys resolve.)
+**0. Load.** Every FHIR resource lands as-is (one table per resourceType,
+`id` + `resource` json). A one-time pass normalizes conditional/identifier
+references to deterministic `uuid5` surrogate ids so foreign keys resolve.
 
-2. **Transform — stage 1 (flatten), the FHIR-native layer.** We use
-   **[SQL on FHIR](https://sql-on-fhir.org) `ViewDefinition`s** to flatten nested
-   FHIR into flat, columnar staging tables. A ViewDefinition is a portable,
-   declarative spec — FHIRPath column expressions, `forEach`, `unionAll` — with
-   **no OMOP knowledge**. This is the same standard the connectathon itself
-   proposes as the shared flattening layer for FHIR-to-OMOP. Spec:
-   <https://build.fhir.org/ig/FHIR/sql-on-fhir-v2/>, repo:
-   <https://github.com/FHIR/sql-on-fhir-v2>.
+**1. `ViewDefinition` — flatten (the FHIR-native layer).** SQL-on-FHIR
+[`ViewDefinition`](https://build.fhir.org/ig/FHIR/sql-on-fhir-v2/)s turn nested
+FHIR into flat, columnar views using FHIRPath column expressions, `forEach`,
+`unionAll` — with **no OMOP knowledge**. This is exactly the shared flattening
+layer proposed for FHIR-to-OMOP. (repo: <https://github.com/FHIR/sql-on-fhir-v2>)
 
-3. **Transform — stage 2 (map to OMOP), the vocabulary layer.** Plain SQL
-   `SELECT`s over the stage-1 tables `JOIN` the OHDSI vocabularies
-   (`vocab.concept`, `concept_relationship 'Maps to'`, `concept_ancestor`) and our
-   ConceptMap tables (`cm.*`) to resolve source codes → standard OMOP
-   `concept_id`s, route each row to the right OMOP table by the concept's
-   `domain_id`, and write `cdm_ours_fhir.*` (OMOP CDM v5.4).
+**2. SQL-View Library — map to OMOP (the vocabulary layer).** A library of SQL
+views over the stage-1 views joins the OHDSI vocabularies (`Maps to`,
+`concept_ancestor`) and ConceptMaps to resolve source codes → standard OMOP
+`concept_id`s, route each row to the right OMOP table by the concept's
+`domain_id`, and produce OMOP CDM v5.4. This is a SQL-View / SQL-Query Library
+in the sense of [HL7/sql-on-fhir#375](https://github.com/HL7/sql-on-fhir/issues/375).
 
-The same idea powers the **data-quality layer in this report**: DQD checks are
-just more SQL-over-the-flattened-data, packaged as SQL-on-FHIR **SQLQuery-Library**
-resources per [HL7/sql-on-fhir#375](https://github.com/HL7/sql-on-fhir/issues/375).
+**3. SQL-Query Library — validate (the data-quality layer).** The OHDSI DQD
+checks are *also* SQL-Query-Library resources over the same views: each check is
+a `Library(type=sqlquery)` returning the failing rows. Data quality is not a
+separate tool — it is one more query library in the same standard.
 
 ```
-FHIR bundles ──Load──▶ fhir.*  ──ViewDefinition (SQL-on-FHIR)──▶ staging.*
-   (jsonb)                              (flat, FHIR-native)          │
-                                                                     ▼ stage-2 SQL
-                                        cdm_ours_fhir.*  ◀──JOIN vocab.* + cm.*──┘
-                                        (OMOP CDM v5.4)
+FHIR ──load──▶ fhir.*  ──ViewDefinition──▶ flat views ──SQL-View Library──▶ OMOP CDM v5.4
+                          (SQL on FHIR)          │                            │
+                                                 └────SQL-Query Library (DQD)─┴──▶ quality report
 ```
 
-Everything is standard and inspectable: the transforms are `ViewDefinition` JSON
-+ SQL (no black-box code), the vocabulary is the published OHDSI release, and the
-conformance target is the HL7 [FHIR-to-OMOP IG](https://build.fhir.org/ig/HL7/fhir-omop-ig/)
+So the entire path — flatten, map, and check — is `ViewDefinition` JSON + SQL
+Library resources: portable across SQL engines, fully inspectable, no black-box
+code. The vocabulary is the published OHDSI release; the conformance target is the
+HL7 [FHIR-to-OMOP IG](https://build.fhir.org/ig/HL7/fhir-omop-ig/)
 statements. Source: <https://github.com/lampadephoros/fhir2omop>.
 
 ## Method
