@@ -25,6 +25,7 @@ declare global {
         };
         dq: {
         run: typeof import("./dq/run").default;
+        ui: typeof import("./dq/ui").default;
         };
         etl_fhir: {
         runEdge: typeof import("./etl_fhir/runEdge").default;

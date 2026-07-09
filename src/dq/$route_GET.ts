@@ -3,7 +3,7 @@
 // (mapspec/dqchecks/*, per HL7/sql-on-fhir#375) grouped by Kahn category,
 // failures surfaced with violated/total bars.
 export default async function (ctx: any, _session: any, req: Request) {
-    const esc = (s: any) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
+    const { esc, KAHN_COLOR: COLOR, statusBadge: badge } = await import("./ui");
     const { readdirSync } = await import("node:fs");
     // discover which schemas have a saved run
     const schemas = readdirSync(".hyper/_runtime").filter((f) => f.startsWith("dq-") && f.endsWith(".json") && f !== "dq-results.json").map((f) => f.slice(3, -5));
@@ -23,7 +23,6 @@ export default async function (ctx: any, _session: any, req: Request) {
 
     const results: any[] = data.results ?? [];
     const KAHN = ["conformance", "completeness", "plausibility"];
-    const COLOR: Record<string, string> = { conformance: "#dc2626", completeness: "#d97706", plausibility: "#7c3aed" };
 
     const tile = (label: string, n: number, color: string) =>
         `<div style="flex:1;min-width:110px;border:1px solid #e5e7eb;border-radius:10px;padding:12px 14px;background:#fff">
@@ -47,10 +46,6 @@ export default async function (ctx: any, _session: any, req: Request) {
         .filter((r) => !onlyFail || r.status === "FAIL" || r.status === "ERROR")
         .sort((a, b) => (ORDER[a.status] ?? 9) - (ORDER[b.status] ?? 9) || (b.pct ?? 0) - (a.pct ?? 0));
     const q = `?schema=${esc(data.schema)}`;
-    const badge = (s: string) => {
-        const c: Record<string, string> = { PASS: "#16a34a", FAIL: "#dc2626", ERROR: "#b91c1c", NA: "#9ca3af" };
-        return `<span style="font-size:10px;font-weight:700;color:${c[s]}">${s === "PASS" ? "✓ PASS" : s === "FAIL" ? "✗ FAIL" : s === "ERROR" ? "! ERR" : "· N/A"}</span>`;
-    };
     const checkRow = (r: any) => {
         const pct = r.pct ?? 0;
         const bar = (r.status === "FAIL" || r.status === "PASS") && r.total

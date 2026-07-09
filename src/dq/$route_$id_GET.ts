@@ -3,7 +3,7 @@
 // actual FAILING rows from the last-run schema.
 export default async function (ctx: any, _session: any, req: Request) {
     const id = (req as any).params.id as string;
-    const esc = (s: any) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
+    const { esc, KAHN_COLOR: COLOR } = await import("./ui");
 
     let lib: any;
     try { lib = JSON.parse(await Bun.file(`mapspec/dqchecks/${id}.sqlquery.json`).text()); }
@@ -33,7 +33,6 @@ export default async function (ctx: any, _session: any, req: Request) {
 
     const pct = total ? +((violated / total) * 100).toFixed(2) : 0;
     const pass = pct <= threshold;
-    const COLOR: Record<string, string> = { conformance: "#dc2626", completeness: "#d97706", plausibility: "#7c3aed" };
 
     const rowsTable = rows.length
         ? `<div style="overflow-x:auto"><table style="border-collapse:collapse;font-size:12px;font-family:monospace">
