@@ -861,6 +861,7 @@ script/gen-dqchecks.ts        # CDM v5.4 field catalog → mapspec/dqchecks/*.sq
 mapspec/dqchecks/*.json       # the generated SQLQuery-Library check resources (committed artifact)
 src/dq/run.ts                 # ctx.fns.dq.run — execute checks vs a schema, pctViolatedRows report
 script/dq.ts                  # CLI: bun script/dq.ts [schema] → writes .hyper/_runtime/dq-<schema>.json
+script/load-gold.ts           # load an external OMOP gold CSV set into a schema (e.g. cdm_gold) to DQD-check it
 src/dq/$route_GET.ts          # GET /dq   — dashboard (schema switcher, category/table grouping, All/Failing filter)
 src/dq/$route_$id_GET.ts      # GET /dq/:id — drill-down: SQL (shiki) + actual failing rows
 ```

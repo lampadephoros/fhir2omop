@@ -39,7 +39,6 @@ function uuid5(name: string): string {
     return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
-const snake = (rt: string) => rt.replace(/([a-z0-9])([A-Z])/g, "$1_$2").toLowerCase();
 
 const tables: { table_name: string }[] = await sql`
     SELECT table_name FROM information_schema.tables WHERE table_schema = 'fhir' ORDER BY table_name`;

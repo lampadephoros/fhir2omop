@@ -105,9 +105,9 @@ statements. Source: <https://github.com/lampadephoros/fhir2omop>.
 |---|---|
 | Golden case suite (`run-cases`) | **172 / 172** |
 | Connectathon answer-key (`run-connectathon`) | **23 / 23** (concept-level) |
-| DQD on `cdm_ours_fhir` (Synthea) | 206 pass, 3 fail (completeness/warning), **0 error** |
-| DQD on `cdm_connectathon` | 123 pass, 7 fail (completeness/warning), **0 error** |
-| DQD on `cdm_gold` (F2O WG gold oracle) | 127 pass, 13 fail, **0 error** |
+| DQD on `cdm_ours_fhir` (Synthea) | 217 pass, 5 fail (completeness/plausibility warnings), **0 error** |
+| DQD on `cdm_connectathon` | 133 pass, 7 fail (warnings), **0 error** |
+| DQD on `cdm_gold` (F2O WG gold oracle) | 132 pass, 20 fail, **0 error** |
 
 ## What the gold's failures actually are
 
@@ -215,6 +215,10 @@ populate the standard Visit concept. Our converter does (connectathon: 9202 ×5,
 bun script/run-cases.ts                    # 172/172 golden
 bun script/run-connectathon.ts             # 23/23 concept-level answer-key
 bun script/dq.ts cdm_ours_fhir             # DQD on our Synthea output
+
+# gold oracle (WG "Focused Gold Standard Tables" — participant artifacts, not
+# redistributed here; point at your local copy):
+bun script/load-gold.ts "<.../Focused Gold Standard Tables>" cdm_gold
 bun script/dq.ts cdm_gold                  # DQD on the WG gold oracle
 # dashboard: /dq  (schema switcher, category/table grouping, All/Failing filter, drill-down)
 ```
