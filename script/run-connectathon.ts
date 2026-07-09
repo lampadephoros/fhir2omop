@@ -14,7 +14,8 @@
 import { SQL } from "bun";
 import { readdirSync, statSync, existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { PLAN, colCount } from "./etl-plan";
+import { PLAN } from "./etl-plan";
+import { schemas, tbl, runScript, resetSchemas, loadFhir, materializeStaging, runResolves, runStage2 } from "./_pipeline";
 
 const DIR = process.argv[2] ?? "tests/connectathon-f2o-2026";
 if (!existsSync(join(DIR, "expected_results.json"))) {
@@ -23,27 +24,11 @@ if (!existsSync(join(DIR, "expected_results.json"))) {
 
 const DSN = process.env.ATHENA_DSN ?? "postgresql://athena:athena@localhost:54392/athena";
 const sql = new SQL(DSN, { idleTimeout: 0, maxLifetime: 0 });
-const SUF = String(process.pid);
-const T = { fhir: `t_fhir_${SUF}`, staging: `t_staging_${SUF}`, cdm: `t_cdm_${SUF}` };
-
-const snake = (rt: string) => rt.replace(/([a-z0-9])([A-Z])/g, "$1_$2").toLowerCase();
-const tbl = (q: string) => q.split(".")[1]!;
-const subSchemas = (b: string) => b.replaceAll("staging.", T.staging + ".").replaceAll("cdm_ours_fhir.", T.cdm + ".");
-const resolveFiles = readdirSync("mapspec/etl").filter((f) => f.startsWith("_resolve_") && f.endsWith(".sql")).sort();
+const T = schemas(String(process.pid));
 
 const ctx: any = { env: process.env, fns: {}, state: {} };
 ctx.fns.db = { query: (await import("../src/db/query")).default };
 ctx.fns.viewdef = { materialize: (await import("../src/viewdef/materialize")).default };
-
-async function runScript(sqlText: string) {
-    const proc = Bun.spawn(["psql", DSN, "-v", "ON_ERROR_STOP=1", "-q"], {
-        stdin: new TextEncoder().encode(sqlText), stdout: "pipe", stderr: "pipe",
-    });
-    if ((await proc.exited) !== 0) {
-        const err = (await new Response(proc.stderr).text()).split("\n").filter(Boolean).slice(-4).join(" | ");
-        throw new Error(err);
-    }
-}
 
 const EXCLUDE = process.env.EXCLUDE;
 // recursively read every *.json FHIR resource under a dir (skip manifests)
@@ -71,53 +56,11 @@ function readFixture(rel: string): any[] {
     } catch { return []; }
 }
 
-async function loadFhir(resources: any[]): Promise<Set<string>> {
-    const byType = new Map<string, any[]>();
-    for (const r of resources) { if (!r?.resourceType) continue; (byType.get(r.resourceType) ?? byType.set(r.resourceType, []).get(r.resourceType)!).push(r); }
-    let ddl = "";
-    for (const [rt, list] of byType) {
-        const t = `${T.fhir}.${snake(rt)}`;
-        ddl += `CREATE TABLE ${t} (id text PRIMARY KEY, resource jsonb NOT NULL);\n`;
-        const seen = new Set<string>();
-        for (const r of list) {
-            if (!r.id || seen.has(r.id)) continue; seen.add(r.id);
-            const lit = JSON.stringify(r).replaceAll("'", "''");
-            ddl += `INSERT INTO ${t} (id, resource) VALUES ('${String(r.id).replaceAll("'", "''")}', '${lit}'::jsonb);\n`;
-        }
-    }
-    await runScript(ddl);
-    return new Set([...byType.keys()].map(snake));
-}
-
 async function runPipeline(present: Set<string>): Promise<Set<string>> {
+    await materializeStaging(ctx, T, present);
+    await runResolves(T);
     const edges = PLAN.filter((p) => present.has(tbl(p.src)));
-    const best = new Map<string, { edge: string; src: string; cols: number }>();
-    for (const p of edges) {
-        const vf = `mapspec/views/${p.edge}.view.json`;
-        if (!(await Bun.file(vf).exists())) continue;
-        const cols = colCount(JSON.parse(await Bun.file(vf).text()));
-        const ex = best.get(p.staging);
-        if (!ex || cols > ex.cols) best.set(p.staging, { edge: p.edge, src: p.src, cols });
-    }
-    for (const [staging, { edge, src }] of best) {
-        const vd = JSON.parse(await Bun.file(`mapspec/views/${edge}.view.json`).text());
-        await ctx.fns.viewdef.materialize(ctx, { viewDefinition: vd, source: `${T.fhir}.${tbl(src)}`, target: `${T.staging}.${tbl(staging)}` });
-        await runScript(`ANALYZE ${T.staging}.${tbl(staging)};`);
-    }
-    for (const f of resolveFiles) {
-        try { await runScript(subSchemas(await Bun.file(`mapspec/etl/${f}`).text())); } catch { /* input absent */ }
-    }
-    const produced = new Set<string>(); const created = new Set<string>();
-    for (const p of edges) {
-        const sf = `mapspec/etl/${p.edge}.sql`;
-        if (!(await Bun.file(sf).exists())) continue;
-        const target = `${T.cdm}.${tbl(p.target)}`;
-        if (!created.has(target)) { await runScript(`CREATE TABLE ${target} (LIKE ${p.target} INCLUDING DEFAULTS);`); created.add(target); }
-        const body = subSchemas(await Bun.file(sf).text());
-        const stmt = p.mode === "update" ? body : `INSERT INTO ${target}\n${body}`;
-        try { await runScript(stmt); produced.add(tbl(p.target)); } catch (e: any) { console.error(`[stage2 ${p.edge}] ${e.message}`); }
-    }
-    return produced;
+    return runStage2(T, edges, undefined, (edge, msg) => console.error(`[stage2 ${edge}] ${msg}`));
 }
 
 async function fetchRows(table: string): Promise<any[]> {
@@ -127,14 +70,10 @@ async function fetchRows(table: string): Promise<any[]> {
     return await sql.unsafe(`SELECT ${sel} FROM ${T.cdm}.${table}`);
 }
 
-async function resetSchemas() {
-    await runScript(`DROP SCHEMA IF EXISTS ${T.fhir} CASCADE; DROP SCHEMA IF EXISTS ${T.staging} CASCADE; DROP SCHEMA IF EXISTS ${T.cdm} CASCADE;
-        CREATE SCHEMA ${T.fhir}; CREATE SCHEMA ${T.staging}; CREATE SCHEMA ${T.cdm};`);
-}
 // reset → load → run pipeline → rows per table
 async function produce(resources: any[]): Promise<{ produced: Set<string>; rowsByTable: Record<string, any[]> }> {
-    await resetSchemas();
-    const present = await loadFhir(resources);
+    await resetSchemas(T);
+    const present = await loadFhir(T, resources);
     const produced = await runPipeline(present);
     const rowsByTable: Record<string, any[]> = {};
     for (const t of produced) rowsByTable[t] = await fetchRows(t);

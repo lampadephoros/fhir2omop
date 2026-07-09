@@ -13,7 +13,8 @@
 //   bun script/run-cases.ts -v                   # verbose (print every diff)
 import { SQL } from "bun";
 import { readdirSync } from "node:fs";
-import { PLAN, colCount } from "./etl-plan";
+import { PLAN } from "./etl-plan";
+import { schemas, tbl, runScript, resetSchemas, loadFhir, materializeStaging, runResolves, runStage2 } from "./_pipeline";
 
 const DSN = process.env.ATHENA_DSN ?? "postgresql://athena:athena@localhost:54392/athena";
 const sql = new SQL(DSN, { idleTimeout: 0, maxLifetime: 0 });
@@ -21,7 +22,7 @@ const sql = new SQL(DSN, { idleTimeout: 0, maxLifetime: 0 });
 // Per-process schema suffix so concurrent `run-cases` invocations (e.g. several
 // case-authoring agents self-verifying at once) don't clobber each other's t_*.
 const SUF = process.env.RC_SUFFIX ?? String(process.pid);
-const T = { fhir: `t_fhir_${SUF}`, staging: `t_staging_${SUF}`, cdm: `t_cdm_${SUF}` };
+const T = schemas(SUF);
 const args = process.argv.slice(2);
 const verbose = args.includes("-v");
 const filter = args.find((a) => !a.startsWith("-"));
@@ -39,22 +40,9 @@ const ctx: any = { env: process.env, fns: {}, state: {} };
 ctx.fns.db = { query: (await import("../src/db/query")).default };
 ctx.fns.viewdef = { materialize: (await import("../src/viewdef/materialize")).default };
 
-const snake = (rt: string) => rt.replace(/([a-z0-9])([A-Z])/g, "$1_$2").toLowerCase();
-const tbl = (q: string) => q.split(".")[1]!;
-// Redirect both pipeline schemas to the isolated test schemas: staging.* (the
-// stage-1 materializations) and cdm_ours_fhir.* (cross-table reads like
-// Patient__observation_period JOIN visit_occurrence, and the PractitionerRole
-// UPDATE target). vocab.* / cm.* (full Athena) stay shared, read-only.
 // RC_VOCAB redirects vocab.* to a subset schema (hermetic runs from the seed);
-// unset = use full Athena vocab.*. cm.* (profile-derived, Athena-independent)
-// always stays as-is.
+// unset = use full Athena vocab.*. See script/_pipeline.ts subSchemas().
 const VOCAB = process.env.RC_VOCAB;
-const subSchemas = (body: string) => {
-    let b = body.replaceAll("staging.", T.staging + ".").replaceAll("cdm_ours_fhir.", T.cdm + ".");
-    if (VOCAB) b = b.replaceAll("vocab.", VOCAB + ".");
-    return b;
-};
-const resolveFiles = readdirSync("mapspec/etl").filter((f) => f.startsWith("_resolve_") && f.endsWith(".sql")).sort();
 
 // Shared fixtures: resources every variant implicitly gets, so a constant
 // Patient/Encounter/Org isn't repeated in each variant. cases/_fixtures.json
@@ -67,42 +55,6 @@ function mergeFhir(...lists: any[][]): any[] {
 }
 let GLOBAL_FIXTURES: any[] = [];
 try { GLOBAL_FIXTURES = JSON.parse(await Bun.file("cases/_fixtures.json").text()).fixtures ?? []; } catch { /* none */ }
-
-async function runScript(sqlText: string): Promise<void> {
-    const proc = Bun.spawn(["psql", DSN, "-v", "ON_ERROR_STOP=1", "-q"], {
-        stdin: new TextEncoder().encode(sqlText), stdout: "pipe", stderr: "pipe",
-    });
-    if ((await proc.exited) !== 0) {
-        const err = (await new Response(proc.stderr).text()).split("\n").filter(Boolean).slice(-4).join(" | ");
-        throw new Error(err);
-    }
-}
-
-async function resetSchemas() {
-    await runScript(`
-        DROP SCHEMA IF EXISTS ${T.fhir} CASCADE; DROP SCHEMA IF EXISTS ${T.staging} CASCADE; DROP SCHEMA IF EXISTS ${T.cdm} CASCADE;
-        CREATE SCHEMA ${T.fhir}; CREATE SCHEMA ${T.staging}; CREATE SCHEMA ${T.cdm};`);
-}
-
-async function loadFhir(resources: any[]): Promise<Set<string>> {
-    const byType = new Map<string, any[]>();
-    for (const r of resources) {
-        if (!r?.resourceType) continue;
-        if (!byType.has(r.resourceType)) byType.set(r.resourceType, []);
-        byType.get(r.resourceType)!.push(r);
-    }
-    let ddl = "";
-    for (const [rt, list] of byType) {
-        const t = `${T.fhir}.${snake(rt)}`;
-        ddl += `CREATE TABLE ${t} (id text PRIMARY KEY, resource jsonb NOT NULL);\n`;
-        for (const r of list) {
-            const lit = JSON.stringify(r).replaceAll("'", "''");
-            ddl += `INSERT INTO ${t} (id, resource) VALUES ('${String(r.id).replaceAll("'", "''")}', '${lit}'::jsonb);\n`;
-        }
-    }
-    await runScript(ddl);
-    return new Set([...byType.keys()].map(snake));
-}
 
 // Resources whose edges fan out to several OMOP tables via a shared resolve
 // pass — for these we run ALL sibling edges so mis-routing to the wrong table
@@ -117,60 +69,19 @@ async function runPipeline(present: Set<string>, slug: string, expectedTables: S
     const primarySrc = primaryFhir ? `fhir.${primaryFhir}` : null;
     const runTargets = new Set([...expectedTables, primaryTable]);
 
-    let edges = PLAN.filter((p) => present.has(tbl(p.src)));
-    edges = edges.filter((p) =>
+    const edges = PLAN.filter((p) => present.has(tbl(p.src))).filter((p) =>
         RESOLVE_FAMILY.has(p.src)
             ? p.src === primarySrc                         // all siblings of the primary resolve family
             : runTargets.has(tbl(p.target)));              // else only expected + primary targets
     if (!edges.length) return new Set();
 
-    // 1. materialize staging (canonical max-column view per staging table).
-    // Materialize for EVERY resource present in the case — not just the
-    // expected-target edges — mirroring the production orchestrator
-    // (etl-all.ts materializes all views before resolves). Resolve passes may
-    // read sibling staging tables (e.g. _resolve_condition.sql falls back to
-    // staging.encounter_visit for the condition date), so those must exist
-    // whenever the case ships the source resource.
-    const best = new Map<string, { edge: string; src: string; cols: number }>();
-    for (const p of PLAN.filter((p) => present.has(tbl(p.src)))) {
-        const vf = `mapspec/views/${p.edge}.view.json`;
-        if (!(await Bun.file(vf).exists())) continue;
-        const cols = colCount(JSON.parse(await Bun.file(vf).text()));
-        const ex = best.get(p.staging);
-        if (!ex || cols > ex.cols) best.set(p.staging, { edge: p.edge, src: p.src, cols });
-    }
-    const materialized = new Set<string>();
-    for (const [staging, { edge, src }] of best) {
-        const vd = JSON.parse(await Bun.file(`mapspec/views/${edge}.view.json`).text());
-        await ctx.fns.viewdef.materialize(ctx, {
-            viewDefinition: vd, source: `${T.fhir}.${tbl(src)}`, target: `${T.staging}.${tbl(staging)}`,
-        });
-        materialized.add(tbl(staging));
-        await runScript(`ANALYZE ${T.staging}.${tbl(staging)};`);
-    }
-
-    // 2. resolve passes (skip silently when their input staging is absent)
-    for (const f of resolveFiles) {
-        try { await runScript(subSchemas(await Bun.file(`mapspec/etl/${f}`).text())); } catch (e: any) { if (verbose) console.log(`    [resolve ${f}] ${e.message}`); }
-    }
-
-    // 3. stage-2 edges → t_cdm (truncate first writer per target, then append)
-    const produced = new Set<string>();
-    const created = new Set<string>();
-    for (const p of edges) {
-        const sf = `mapspec/etl/${p.edge}.sql`;
-        if (!(await Bun.file(sf).exists())) continue;
-        const target = `${T.cdm}.${tbl(p.target)}`;
-        if (!created.has(target)) {
-            await runScript(`CREATE TABLE ${target} (LIKE ${p.target} INCLUDING DEFAULTS);`);
-            created.add(target);
-        }
-        const body = subSchemas(await Bun.file(sf).text());
-        const stmt = p.mode === "update" ? body : `INSERT INTO ${target}\n${body}`;
-        try { await runScript(stmt); produced.add(tbl(p.target)); }
-        catch (e: any) { if (verbose) console.log(`    [stage2 ${p.edge}] ${e.message}`); }
-    }
-    return produced;
+    // Materialize staging for EVERY resource present (not just the selected
+    // edges) so resolve passes that read a sibling staging table find it (e.g.
+    // _resolve_condition falls back to staging.encounter_visit); then run all
+    // resolves, then the selected stage-2 edges. See script/_pipeline.ts.
+    await materializeStaging(ctx, T, present);
+    await runResolves(T, VOCAB, (f, msg) => { if (verbose) console.log(`    [resolve ${f}] ${msg}`); });
+    return runStage2(T, edges, VOCAB, (edge, msg) => { if (verbose) console.log(`    [stage2 ${edge}] ${msg}`); });
 }
 
 // ── assertion ────────────────────────────────────────────────────────────────
@@ -371,8 +282,8 @@ for (const f of files) {
             return { i, omopByTable: normalizeOmop(v.omop), resourceIds: merged.map((r: any) => r.id).filter(Boolean) };
         });
 
-        await resetSchemas();
-        const present = await loadFhir(mergeFhir(allFhir)); // dedup shared fixtures across variants
+        await resetSchemas(T);
+        const present = await loadFhir(T, mergeFhir(allFhir)); // dedup shared fixtures across variants
         const expectedTables = new Set<string>(meta.flatMap((m) => Object.keys(m.omopByTable)));
         const produced = await runPipeline(present, slug, expectedTables);
         if (process.env.DUMP_SEED) await collectConcepts(seedSet);
